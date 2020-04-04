@@ -1,0 +1,16 @@
+
+# Ignore temporary files by Microsoft Office (eg.~$ProgressJournal.xlsm)
+~$*
+
+# Ingore temporary files by Visual Studio
+/.vs
+
+# Ignore build and binary files
+/binaries
+/build
+
+# Ignore Visual Studio project files
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
