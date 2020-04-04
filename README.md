@@ -1,2 +1,4 @@
-# llama
-Llama Game Library
+# Llama
+*Llama Game Library*
+
+Game Engine in C++/Vulkan
