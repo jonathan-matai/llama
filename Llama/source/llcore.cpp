@@ -4,5 +4,5 @@
 
 void llama::helloWorld()
 {
-    printf("Llama says: Hello!");
+    printf("Llama says: Hello!\n");
 }

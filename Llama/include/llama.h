@@ -1,7 +1,4 @@
-#pragma once
-
 /*
-
   _      _
  | |    | |
  | |    | | __ _ _ __ ___   __ _
@@ -9,14 +6,14 @@
  | |____| | (_| | | | | | | (_| |
  |______|_|\__,_|_| |_| |_|\__,_|
 
+ LLAMA GAME LIBRARY
+ by Jonathan Matai
+ https://github.com/jonathan-matai/llama
 
-  _    _
- | |  | |__ _ _ __  __ _
- | |__| / _` | '  \/ _` |
- |____|_\__,_|_|_|_\__,_|
-
-
-
+ 
 */
 
+#pragma once
+
 #include "llama/llcore.h"
+#include "llama/llevent.h"
