@@ -2,6 +2,7 @@
 
 int main()
 {
-    llama::helloWorld();
+    llama::ServerSocket socket = llama::createServerSocket(2020, false);
+
     return 0;
 }

@@ -1,50 +1,37 @@
 #include <llama.h>
 
+#include "calculator.h"
+
 #include <typeindex>
 #include <cstdio>
 
-class RandomEvent : public llama::Event
-{
-public:
-
-    RandomEvent(const char* msg) :
-        Event(llama::EventPriority::IMMEDIATE),
-        m_msg(msg) { }
-
-    const char* m_msg;
-};
-
-class NumberEvent : public llama::Event
-{
-public:
-
-    NumberEvent(int number) : 
-        Event(llama::EventPriority::IMMEDIATE),
-        m_number(number) { }
-
-    int m_number;
-};
-
-bool dispatchRandomEvent(RandomEvent* e)
-{
-    printf("The string is %s\n", e->m_msg);
-    return false;
-}
-
-bool dispatchNumberEvent(NumberEvent* e)
-{
-    printf("The number is %d\n", e->m_number);
-    return false;
-}
-
 int main()
 {
-    llama::EventBus bus = llama::createEventBus();
-    bus->addDispatcher(std::function(dispatchRandomEvent));
-    bus->addDispatcher(std::function(dispatchNumberEvent));
+    /*
+    printf("Enter IP Version: ");
+    int i;
+    scanf_s("%d", &i);
 
-    bus->postEvent(new NumberEvent(666));
-    bus->postEvent(new RandomEvent("Hello World!"));
+    llama::ClientSocket socket = llama::createClientSocket();
+
+    printf("Enter hostname of server: ");
+    char buffer[128];
+    scanf_s("%s", buffer, 128);
+
+    socket->connectServer(buffer, "2020", i == 4 ? true : false);
+    */
+
+    llama::EventBus bus = llama::createEventBus();
+
+    std::shared_ptr<Calculator> calc = std::make_shared<Calculator>(bus);
+    std::shared_ptr<Console> con = std::make_shared<Console>(bus);
+
+    calc->addToDefaultBus();
+    con->addToDefaultBus();
+
+    //Console con(bus);
+
+    con->run();
 
     return 0;
 }

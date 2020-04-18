@@ -1,3 +1,15 @@
+--[[
+  _    _
+ | |  | |__ _ _ __  __ _
+ | |__| / _` | '  \/ _` |
+ |____|_\__,_|_|_|_\__,_|
+
+ Llama Game Library
+
+ > premake5.lua
+ The project setup file for Premake5
+]]
+
 workspace "Llama"
 
     config = "%{cfg.buildcfg}-%{cfg.system}"
@@ -45,27 +57,31 @@ workspace "Llama"
 
         includedirs
         {
-            "%{prj.name}/include/llama"
+            "%{prj.name}/include/llama",
+            "%{prj.name}/vendor/asio/asio/include"
         }
 
         files
         {
             "%{prj.name}/include/**.h",
+            "%{prj.name}/include/**.inl",
             "%{prj.name}/source/**.cpp",
             "%{prj.name}/source/**.h"
         }
 
         defines { "LLAMA_BUILD" }
 
-    project "Client_1"
+    project "Common_1"
 
-        kind "ConsoleApp"
-        location "Client_1"
+        kind "StaticLib"
+        location "Common_1"
 
         files
         {
+            "%{prj.name}/include/**.h",
+            "%{prj.name}/include/**.inl",
             "%{prj.name}/source/**.cpp",
-            "%{prj.name}/soruce/**.h"
+            "%{prj.name}/source/**.h"
         }
 
         includedirs
@@ -76,6 +92,29 @@ workspace "Llama"
         links
         {
             "Llama"
+        }
+
+    project "Client_1"
+
+        kind "ConsoleApp"
+        location "Client_1"
+
+        files
+        {
+            "%{prj.name}/source/**.cpp",
+            "%{prj.name}/source/**.h"
+        }
+
+        includedirs
+        {
+            "Llama/include",
+            "Common_1/include"
+        }
+
+        links
+        {
+            "Llama",
+            "Common_1"
         }
 
     project "Server_1"
@@ -86,15 +125,17 @@ workspace "Llama"
         files
         {
             "%{prj.name}/source/**.cpp",
-            "%{prj.name}/soruce/**.h"
+            "%{prj.name}/source/**.h"
         }
 
         includedirs
         {
-            "Llama/include"
+            "Llama/include",
+            "Common_1/include"
         }
 
         links
         {
-            "Llama"
+            "Llama",
+            "Common_1"
         }

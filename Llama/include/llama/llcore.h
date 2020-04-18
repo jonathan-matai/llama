@@ -32,11 +32,16 @@
 // std::unordered_map
 #include <unordered_map>
 
-// std::type_index, std::type_info
-#include <typeindex>
+// std::is_base_of
+#include <type_traits>
 
-// std::queue, std::dequeue, std::vector
+// std::array
+#include <array>
+
+// std::queue
 #include <queue>
+
+typedef uint8_t byte;
 
 namespace llama
 {
