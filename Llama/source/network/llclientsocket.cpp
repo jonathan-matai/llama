@@ -90,11 +90,13 @@ namespace llama
         return false;
     }
 
-    llama::ClientSocket llama::createClientSocket()
+    llama::ClientSocket llama::createClientSocket(EventBus eventBus)
     {
         try
         {
-            return std::make_shared<ClientSocket_I>();
+            auto a = std::make_shared<ClientSocket_I>();
+            /// eventBus->addDispatcher(a, &ClientSocket_I::function);
+            return a;
         }
         catch (asio::system_error error)
         {

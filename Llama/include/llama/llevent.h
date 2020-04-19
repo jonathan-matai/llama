@@ -49,8 +49,6 @@ namespace llama
         TYPE_X
     }
 
-    llama::LAST_EVENT_TYPE_ID = UserDefinedEventType::TYPE_X;
-
     */
 
     class Event
@@ -116,7 +114,7 @@ namespace llama
 
     // Creates a new EventBus Object
     // @return:             The EventBus created
-    EventBus createEventBus() { return std::make_shared<EventBus_T>(); }
+    inline EventBus createEventBus() { return std::make_shared<EventBus_T>(); }
 
 }
 

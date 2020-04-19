@@ -29,7 +29,7 @@ workspace "Llama"
     
         systemversion "latest"
 
-        defines { "LLAMA_OS_WINDOWS", "LLAMA_OS=\"Windows\"" }
+        defines { "LLAMA_OS_WINDOWS", "LLAMA_OS=\"Windows\"", "WINVER=0x0A00", "_WIN32_WINNT=0x0A00", "_CRT_SECURE_NO_WARNINGS" }
 
     filter "system:linux"
 
@@ -39,13 +39,13 @@ workspace "Llama"
 
         symbols "On"
         
-        defines { "LLAMA_DEBUG", "DEBUG" }
+        defines { "LLAMA_DEBUG", "DEBUG", "LLAMA_CONFIG=\"Debug\"" }
 
     filter "configurations:Release"
 
         optimize "On"
 
-        defines { "LLAMA_RELEASE", "NDEBUG" }
+        defines { "LLAMA_RELEASE", "NDEBUG", "LLAMA_CONFIG=\"Release\"" }
 
     project "Llama"
 

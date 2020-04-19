@@ -29,8 +29,11 @@
 // std::function
 #include <functional>
 
-// std::unordered_map
-#include <unordered_map>
+// std::string, std::string_view
+#include <string>
+
+// std::thread, std::mutex, std::lock_guard
+#include <mutex>
 
 // std::is_base_of
 #include <type_traits>
@@ -41,11 +44,29 @@
 // std::queue
 #include <queue>
 
+// std::filesystem::...
+#include <filesystem>
+
 typedef uint8_t byte;
+
+// llama::Color
+#include "logging/llcolor.h"
+
+// llama::Timestamp
+#include "logging/lltime.h"
+
+// llama::Logfile, llama::Table
+#include "logging/lllogfile.h"
 
 namespace llama
 {
-    LLAMA_API void helloWorld();
+    // Returns the length of a string
+    //
+    // @string: UTF8-encoded string
+    // @return: Character count of string (not the actual byte size!)
+    LLAMA_API size_t stringLength(std::string_view string);
+
+    constexpr size_t bit(uint8_t bit) { return size_t(1) << bit; }
 }
 
 #endif
