@@ -27,7 +27,7 @@ inline void llama::EventBus_T::addDispatcher(std::weak_ptr<DispatcherType> dispa
 }
 
 template<typename EventType, typename DispatcherType>
-inline static llama::EventBus_T::DispatchState llama::EventBus_T::dispatchIfNotExpired(void* event, std::weak_ptr<DispatcherType> dispatcher, bool(DispatcherType::* function)(EventType*))
+inline llama::EventBus_T::DispatchState llama::EventBus_T::dispatchIfNotExpired(void* event, std::weak_ptr<DispatcherType> dispatcher, bool(DispatcherType::* function)(EventType*))
 {
     if (dispatcher.expired())
         return DispatchState::DISPATCHER_EXPIRED;
@@ -61,7 +61,8 @@ inline void llama::EventBus_T::postEvent(void* rawEvent, size_t maxSize)
     else
     {
         Event* a = reinterpret_cast<Event*>(::operator new(maxSize));
-        memcpy_s(a, maxSize, rawEvent, maxSize);
+        memcpy(a, rawEvent, maxSize);
+        //memcpy_s(a, maxSize, rawEvent, maxSize);
         m_events.push(a);
     }
 }

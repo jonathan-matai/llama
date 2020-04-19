@@ -41,6 +41,15 @@
 // std::queue
 #include <queue>
 
+// std::list
+#include <list>
+
+// std::shared_ptr, std::unique_ptr
+#include <memory>
+
+// memcpy
+#include <cstring>
+
 typedef uint8_t byte;
 
 namespace llama

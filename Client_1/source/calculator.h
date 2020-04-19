@@ -100,7 +100,7 @@ public:
         while (true)
         {
             CalculatorEvent e;
-            scanf_s("%d %c %d", &e.m_a, &e.m_operator, 1, &e.m_b);
+            scanf("%d %c %d", &e.m_a, &e.m_operator, &e.m_b);
             m_bus->postEvent(CalculatorEvent(e));
         }
     }

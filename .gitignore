@@ -19,3 +19,6 @@
 *.sh
 *.bat
 *.ps1
+
+# Ignore Makefiles
+Makefile

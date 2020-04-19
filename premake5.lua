@@ -35,6 +35,8 @@ workspace "Llama"
 
         defines { "LLAMA_OS_LINUX", "LLAMA_OS=\"Linux\"" }
 
+        linkoptions "-pthread"
+
     filter "configurations:Debug"
 
         symbols "On"
