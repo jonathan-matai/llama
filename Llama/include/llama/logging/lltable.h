@@ -20,7 +20,7 @@ namespace llama
 
     public:
 
-        Table(std::string_view title, Color color, std::initializer_list<std::string_view> headers);
+        inline Table(std::string_view title, Color color, std::initializer_list<std::string_view> headers);
 
         inline void addRow(Color color, std::initializer_list<std::string_view> row);
         inline void addRow(std::initializer_list<std::pair<Color, std::string_view>> row);

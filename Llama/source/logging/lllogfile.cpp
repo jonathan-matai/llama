@@ -3,6 +3,14 @@
 #include <cstdarg>
 #include <locale>
 
+#if defined(__has_include) && __has_include(<filesystem>)
+    #include <filesystem>
+#else
+    #include <experimental/filesystem>
+    namespace std { using namespace std::experimental; }
+#endif
+
+
 namespace llama
 {
     class Logfile_I : public Logfile_T
@@ -37,7 +45,9 @@ llama::Logfile& llama::logfile()
 
 llama::Logfile_I::Logfile_I(std::string_view name, std::string_view path)
 {
+#ifdef LLAMA_OS_WINDOWS
     std::locale::global(std::locale("en_us.UTF8"));
+#endif
 
     m_fileHandle = fopen(std::string(path).c_str(), "w");
 

@@ -91,31 +91,17 @@ bool llama::ClientSocket_I::connectServer(std::string_view hostname, std::string
     return false;
 }
 
-llama::ClientSocket llama::createClientSocket()
+llama::ClientSocket llama::createClientSocket(EventBus eventBus)
 {
     try
     {
-        return std::make_shared<ClientSocket_I>();
+        auto a = std::make_shared<ClientSocket_I>();
+        /// eventBus->addDispatcher(a, &ClientSocket_I::function);
+        return a;
     }
-<<<<<<< HEAD
     catch (asio::system_error error)
     {
         printf("Error occured: %s\n", error.what());
         return nullptr;
-=======
-
-    llama::ClientSocket llama::createClientSocket(EventBus eventBus)
-    {
-        try
-        {
-            auto a = std::make_shared<ClientSocket_I>();
-            /// eventBus->addDispatcher(a, &ClientSocket_I::function);
-            return a;
-        }
-        catch (asio::system_error error)
-        {
-            printf("Error occured: %s\n", error.what());
-            return nullptr;
-        }
->>>>>>> 13d2e35dece35eb7222a5639014727fc3e71632d
-    }}
+    }
+}

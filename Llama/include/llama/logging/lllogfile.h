@@ -19,7 +19,7 @@ namespace llama
     struct DebugInfo
     {
         const char* file;
-        long line;
+        int line;
         const char* function;
     };
 

@@ -26,6 +26,14 @@
     #define LLAMA_API
 #endif
 
+#ifndef LLAMA_OS
+#define LLAMA_OS "Unknown"
+#endif
+
+#ifndef LLAMA_CONFIG
+#define LLAMA_CONFIG "Unknown"
+#endif
+
 // std::function
 #include <functional>
 
@@ -44,7 +52,6 @@
 // std::queue
 #include <queue>
 
-<<<<<<< HEAD
 // std::list
 #include <list>
 
@@ -53,10 +60,6 @@
 
 // memcpy
 #include <cstring>
-=======
-// std::filesystem::...
-#include <filesystem>
->>>>>>> 13d2e35dece35eb7222a5639014727fc3e71632d
 
 typedef uint8_t byte;
 

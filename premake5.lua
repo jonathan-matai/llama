@@ -35,7 +35,7 @@ workspace "Llama"
 
         defines { "LLAMA_OS_LINUX", "LLAMA_OS=\"Linux\"" }
 
-        linkoptions "-pthread"
+        linkoptions { "-pthread", "-lstdc++fs" }
 
     filter "configurations:Debug"
 
@@ -117,6 +117,8 @@ workspace "Llama"
         {
             "Llama",
             "Common_1"
+            --,
+            --"stdc++fs"
         }
 
     project "Server_1"
@@ -140,4 +142,6 @@ workspace "Llama"
         {
             "Llama",
             "Common_1"
+            --,
+            --"stdc++fs"
         }

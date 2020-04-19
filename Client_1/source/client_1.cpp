@@ -37,15 +37,15 @@ int main()
     con->run();
     */
 
-    llama::Logfile log = llama::createLogfile(u8"ä_Client_1", u8"log.html");
+    llama::Logfile log = llama::createLogfile(u8"Client_1", u8"log.html");
 
-    log->print(llama::Colors::YELLOW, u8"Übergrößenträger");
+    log->print(llama::Colors::YELLOW, u8"ÃœbergrÃ¶ÃŸentrÃ¤ger");
     log->print(llama::Colors::MAGENTA, LLAMA_DEBUG_INFO, "The %s goes skrra", "ting");
 
     llama::Table table("Playlist", llama::Colors::WHITE, { "Title", "Artist", "Genre" });
     table.addRow(llama::Colors::GREEN, { "Owner of a Lonely Heart", "Yes", "Rock" });
     table.addRow({ { llama::Colors::RED, "Don't beg" }, { llama::Colors::WHITE, "Synx, CruciA" }, { llama::Colors::BLUE, "Dubstep" } });
-    table.addRow(llama::Colors::WHITE, { "Halo", "Martin O'Donnell, Michael Salvatori", u8"Filmmusik_ä" });
+    table.addRow(llama::Colors::WHITE, { "Halo", "Martin O'Donnell, Michael Salvatori", u8"Filmmusik" });
 
     log->print(table);
     log->print(table, true);

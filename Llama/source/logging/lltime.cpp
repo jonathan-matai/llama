@@ -1,5 +1,14 @@
 ﻿#include "llcore.h"
 
+#include <inttypes.h>
+
+#if defined(__has_include) && __has_include(<filesystem>)
+    #include <filesystem>
+#else
+    #include <experimental/filesystem>
+    namespace std { using namespace std::experimental; }
+#endif
+
 #ifdef LLAMA_OS_WINDOWS
 
 // Makes the functionallity of localtime_s the same as localtime_r on unix
@@ -68,15 +77,15 @@ std::string llama::duration(const Timestamp& start, const Timestamp& end)
     else if (dur < 60'000'000'000) // < 1min
         snprintf(&formatted[0], 12, "%.3f s", static_cast<float>(dur) / 1'000'000'000.0f);
     else if ((dur /= 1'000'000'000) < 3600) // < 1h
-        snprintf(&formatted[0], 12, "%lld:%02lld min", dur, dur /= 60);
+        snprintf(&formatted[0], 12, "%" PRIu64 ":%02" PRIu64 " min", dur, dur /= 60);
     else if (dur < 60 * 24) // < 24h
-        snprintf(&formatted[0], 12, "%lld:%02lld h", dur, dur /= 60);
+        snprintf(&formatted[0], 12, "%" PRIu64 ":%02" PRIu64 " h", dur, dur /= 60);
     else if ((dur /= 24) < 31) // < 1m
-        snprintf(&formatted[0], 12, "%lld d", dur);
+        snprintf(&formatted[0], 12, "%" PRIu64 " d", dur);
     else if ((dur /= 31) < 12) // < 1y
-        snprintf(&formatted[0], 12, "%lld m", dur);
+        snprintf(&formatted[0], 12, "%" PRIu64 " m", dur);
     else // > 1y
-        snprintf(&formatted[0], 12, "%lld y", dur / 12);
+        snprintf(&formatted[0], 12, "%" PRIu64 " y", dur / 12);
 
     return std::move(formatted);
 }
