@@ -12,6 +12,8 @@
 
 #pragma once
 
+#include "../llevent.h"
+
 namespace llama
 {
     class ClientSocket_T
@@ -28,5 +30,5 @@ namespace llama
 
     // Create a new ClientSocket Object
     // @return:     The newly created ClientSocket Object
-    LLAMA_API ClientSocket createClientSocket();
+    LLAMA_API ClientSocket createClientSocket(EventBus eventBus);
 }

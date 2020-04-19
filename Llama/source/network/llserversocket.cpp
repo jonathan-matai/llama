@@ -44,11 +44,13 @@ namespace llama
     }
 }
 
-llama::ServerSocket llama::createServerSocket(uint16_t port, bool ipv4)
+llama::ServerSocket llama::createServerSocket(EventBus eventBus, uint16_t port, bool ipv4)
 {
     try
     {
-        return std::make_shared<ServerSocket_I>(port, ipv4);
+        auto a = std::make_shared<ServerSocket_I>(port, ipv4);
+        /// eventBus->addDispatcher(a, &ServerSocket_I::function)
+        return a;
     }
     catch (asio::system_error error)
     {

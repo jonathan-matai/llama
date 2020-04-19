@@ -2,7 +2,13 @@
 
 #include <cstdio>
 
-void llama::helloWorld()
+size_t llama::stringLength(std::string_view string)
 {
-    printf("Llama says: Hello!\n");
+    size_t length = 0;
+
+    for (auto a = string.cbegin(); a != string.cend(); ++a) // Loop through all characters
+        if ((*a & 0xc0) != 0x80) // Skip additional bytes from multibyte character
+            ++length;
+
+    return length;
 }

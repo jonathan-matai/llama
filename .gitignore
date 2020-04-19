@@ -22,3 +22,8 @@
 
 # Ignore Makefiles
 Makefile
+
+# Ignore config file for CLOC
+/langdef.txt
+# Ignore logfiles
+log.html

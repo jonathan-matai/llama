@@ -21,6 +21,9 @@ int main()
     socket->connectServer(buffer, "2020", i == 4 ? true : false);
     */
 
+    /*
+    
+    
     llama::EventBus bus = llama::createEventBus();
 
     std::shared_ptr<Calculator> calc = std::make_shared<Calculator>(bus);
@@ -32,6 +35,20 @@ int main()
     //Console con(bus);
 
     con->run();
+    */
+
+    llama::Logfile log = llama::createLogfile(u8"ä_Client_1", u8"log.html");
+
+    log->print(llama::Colors::YELLOW, u8"Übergrößenträger");
+    log->print(llama::Colors::MAGENTA, LLAMA_DEBUG_INFO, "The %s goes skrra", "ting");
+
+    llama::Table table("Playlist", llama::Colors::WHITE, { "Title", "Artist", "Genre" });
+    table.addRow(llama::Colors::GREEN, { "Owner of a Lonely Heart", "Yes", "Rock" });
+    table.addRow({ { llama::Colors::RED, "Don't beg" }, { llama::Colors::WHITE, "Synx, CruciA" }, { llama::Colors::BLUE, "Dubstep" } });
+    table.addRow(llama::Colors::WHITE, { "Halo", "Martin O'Donnell, Michael Salvatori", u8"Filmmusik_ä" });
+
+    log->print(table);
+    log->print(table, true);
 
     return 0;
 }
