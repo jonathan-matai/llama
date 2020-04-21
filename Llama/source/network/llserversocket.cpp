@@ -44,7 +44,7 @@ namespace llama
     }
 }
 
-llama::ServerSocket llama::createServerSocket(EventBus eventBus, uint16_t port, bool ipv4)
+llama::ServerSocket llama::createServerSocket(EventNode node, uint16_t port, bool ipv4)
 {
     try
     {

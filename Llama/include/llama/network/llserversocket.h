@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "../llevent.h"
+#include "../event/llevent.h"
 
 namespace llama
 {
@@ -26,9 +26,9 @@ namespace llama
     typedef std::shared_ptr<ServerSocket_T> ServerSocket;
 
     // Create a new ClientSocket Object
-    // @eventBus:   The Event Bus the socket connects to
+    // @node:       The Event Bus or filter the socket connects to
     // @port:       The port that the server should use
     // @ipv4:       By default, servers are IPv6, when ipv4 is set to true, the Server uses IPv4 and only IPv4 clients can connect
     // @return:     The newly created ClientSocket Object
-    LLAMA_API ServerSocket createServerSocket(EventBus eventBus, uint16_t port, bool ipv4 = false);
+    LLAMA_API ServerSocket createServerSocket(EventNode node, uint16_t port, bool ipv4 = false);
 }

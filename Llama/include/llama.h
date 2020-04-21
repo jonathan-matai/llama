@@ -15,6 +15,7 @@
 #pragma once
 
 #include "llama/llcore.h"
-#include "llama/llevent.h"
+#include "llama/event/lleventbus.h"
+#include "llama/event/lleventfilter.h"
 #include "llama/network/llclientsocket.h"
 #include "llama/network/llserversocket.h"

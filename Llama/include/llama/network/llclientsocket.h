@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "../llevent.h"
+#include "../event/llevent.h"
 
 namespace llama
 {
@@ -29,6 +29,7 @@ namespace llama
 
 
     // Create a new ClientSocket Object
+    // @node:       The Event Bus or filter the socket connects to
     // @return:     The newly created ClientSocket Object
-    LLAMA_API ClientSocket createClientSocket(EventBus eventBus);
+    LLAMA_API ClientSocket createClientSocket(EventNode eventBus);
 }

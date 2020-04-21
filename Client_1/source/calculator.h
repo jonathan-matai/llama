@@ -32,21 +32,21 @@ struct PrintEvent : public llama::Event
 
 class Calculator : public std::enable_shared_from_this<Calculator>
 {
-    llama::EventBus m_bus;
+    llama::EventNode m_bus;
 
 public:
 
-    Calculator(llama::EventBus bus) :
+    Calculator(llama::EventNode bus) :
         m_bus(bus)
     {        
     }
 
     void addToDefaultBus()
     {
-        m_bus->addDispatcher(weak_from_this(), &Calculator::calculate);
+        m_bus->addDispatcher(makeDispatcher(weak_from_this(), &Calculator::calculate));
     }
 
-    bool calculate(CalculatorEvent* e)
+    llama::EventDispatchState calculate(CalculatorEvent* e)
     {
         int result = 0;
 
@@ -68,31 +68,32 @@ public:
             break;
         }
 
-        m_bus->postEvent(PrintEvent(std::string("The number is ") + std::to_string(result)));
-        return true;
+        m_bus->postEvent(makeEvent(PrintEvent(std::string("The number is ") + std::to_string(result))));
+
+        return llama::EventDispatchState::DISPATCHED;
     }
 };
 
 class Console : public std::enable_shared_from_this<Console>
 {
-    llama::EventBus m_bus;
+    llama::EventNode m_bus;
 
 public:
 
-    Console(llama::EventBus bus) :
+    Console(llama::EventNode bus) :
         m_bus(bus)
     {
     }
 
     void addToDefaultBus()
     {
-        m_bus->addDispatcher(weak_from_this(), &Console::print);
+        m_bus->addDispatcher(makeDispatcher(weak_from_this(), &Console::print));
     }
 
-    bool print(PrintEvent* e)
+    llama::EventDispatchState print(PrintEvent* e)
     {
         printf("Recieved following PrintEvent: %s\n", e->m_message.c_str());
-        return true;
+        return llama::EventDispatchState::DISPATCHED;
     }
 
     void run()
@@ -101,7 +102,7 @@ public:
         {
             CalculatorEvent e;
             scanf("%d %c %d", &e.m_a, &e.m_operator, &e.m_b);
-            m_bus->postEvent(CalculatorEvent(e));
+            m_bus->postEvent(makeEvent(CalculatorEvent(e)));
         }
     }
 };

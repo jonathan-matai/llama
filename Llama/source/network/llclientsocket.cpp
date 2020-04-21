@@ -91,7 +91,7 @@ bool llama::ClientSocket_I::connectServer(std::string_view hostname, std::string
     return false;
 }
 
-llama::ClientSocket llama::createClientSocket(EventBus eventBus)
+llama::ClientSocket llama::createClientSocket(EventNode node)
 {
     try
     {

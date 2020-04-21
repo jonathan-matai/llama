@@ -21,7 +21,7 @@ int main()
     socket->connectServer(buffer, "2020", i == 4 ? true : false);
     */
 
-    /*
+    
     
     
     llama::EventBus bus = llama::createEventBus();
@@ -32,11 +32,8 @@ int main()
     calc->addToDefaultBus();
     con->addToDefaultBus();
 
-    //Console con(bus);
-
     con->run();
-    */
-
+    /*
     llama::Logfile log = llama::createLogfile(u8"Client_1", u8"log.html");
 
     log->print(llama::Colors::YELLOW, u8"Übergrößenträger");
@@ -49,6 +46,6 @@ int main()
 
     log->print(table);
     log->print(table, true);
-
+    */
     return 0;
 }
