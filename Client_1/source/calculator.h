@@ -106,3 +106,47 @@ public:
         }
     }
 };
+
+class CalculatorFilter : public llama::EventFilter_T
+{
+public:
+
+    CalculatorFilter(llama::EventNode bus) :
+        EventFilter_T(bus, llama::EventFilterMode::BLACKLIST, llama::EventFilterMode::BLACKLIST)
+    {
+        addFilterRule(FilterDirection::DOWNLINK, makeFilterRule(&CalculatorFilter::filterCalculatorEvent));
+    }
+
+    FilterResult filterCalculatorEvent(CalculatorEvent* e)
+    {
+        if ((e->m_operator == '/' || e->m_operator == ':') && e->m_b == 0)
+        {
+            printf("Event blocked! Division by 0!\n");
+            return FilterResult::BLOCKED;
+        }
+
+        return FilterResult::APPROVED;
+    }
+};
+
+class CalculatorBusFilter : public llama::EventFilter_T
+{
+public:
+
+    CalculatorBusFilter(llama::EventNode bus, llama::EventNode bus2) :
+        EventFilter_T(bus, bus2, llama::EventFilterMode::BLACKLIST, llama::EventFilterMode::BLACKLIST)
+    {
+        addFilterRule(FilterDirection::BIDIRCETIONAL, makeFilterRule(&CalculatorFilter::filterCalculatorEvent));
+    }
+
+    FilterResult filterCalculatorEvent(CalculatorEvent* e)
+    {
+        if ((e->m_operator == '/' || e->m_operator == ':') && e->m_b == 0)
+        {
+            printf("Event blocked! Division by 0!\n");
+            return FilterResult::BLOCKED;
+        }
+
+        return FilterResult::APPROVED;
+    }
+};

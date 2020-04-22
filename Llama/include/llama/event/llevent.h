@@ -29,8 +29,9 @@ namespace llama
     };
 
     // Lists all engine related events
-    enum class InternalEventType
+    enum InternalEventType
     {
+        ANY_EVENT = 0,
         CLOSE_APPLICATION,
         BEGIN_USER_IMPLEMENTATION
     };
@@ -55,12 +56,23 @@ namespace llama
 
         EventTypeID m_type;
         EventPriority m_priority;
+        void* m_creator;
 
     protected:
 
-        Event(EventTypeID type, EventPriority priority) :
+        Event(EventTypeID type, EventPriority priority, void* creator = nullptr) : 
             m_type(type),
-            m_priority(priority) { }
+            m_priority(priority),
+            m_creator(creator) { }
+    };
+
+    struct EventDispatcher
+    {
+        EventTypeID eventType;
+        std::function<EventDispatchState(Event*)> callback;
+
+        EventDispatcher(EventTypeID type, const std::function<EventDispatchState(Event*)>& function) :
+            eventType(type), callback(function) { }
     };
 
     // Helper Function to pass an Event to an Event Node
@@ -78,9 +90,9 @@ namespace llama
     //                      @param:     A pointer to the Event for dispatching
     //                      @return:    The State of Dispatching, view Declaration of EventDispatchState for more information
     template<typename EventType, typename DispatcherClass>
-    inline std::pair<EventTypeID, std::function<EventDispatchState(void*)>> makeDispatcher(std::weak_ptr<DispatcherClass> dispatcher, 
-                                                                                           EventDispatchState(DispatcherClass::* function)(EventType*));
-
+    EventDispatcher makeDispatcher(std::weak_ptr<DispatcherClass> dispatcher,
+                                   EventDispatchState(DispatcherClass::* function)(EventType*));
+    
 
     class EventNode_T
     {
@@ -91,23 +103,27 @@ namespace llama
         // Add a dispatcher to the Node
         // @dispatcher      A dispatcher function created by the makeDispatcher() helper function
         //                  (e.g. addDispatcher(makeDispatcher(weak_from_this(), &Receiver::method)))
-        virtual void addDispatcher(std::pair<EventTypeID, std::function<EventDispatchState(void*)>>&& dispatcher) = 0;
+        virtual void addDispatcher(EventDispatcher&& dispatcher) = 0;
 
         // Post an event to the Node
         // @event           Post an event created by the makeEvent() helper function
         //                  (e.g. postEvent(makeEvent(ExampleEvent(...)))
-        virtual void postEvent(std::unique_ptr<Event>&& event) = 0;
+        virtual inline void postEvent(std::unique_ptr<Event>&& event);
+
+        // Post an event to the Node, that gets dispatched immediatly and returns DispatchState
+        // @event           The forwarded element
+        virtual EventDispatchState forwardEvent(Event* event) = 0;
 
     private:
 
         // Friend declaration
         template<typename EventType, typename DispatcherClass>
-        friend inline std::pair<EventTypeID, std::function<EventDispatchState(void*)>> makeDispatcher(std::weak_ptr<DispatcherClass> dispatcher, 
-                                                                                                      EventDispatchState(DispatcherClass::* function)(EventType*));
+        friend inline EventDispatcher makeDispatcher(std::weak_ptr<DispatcherClass> dispatcher,
+                                                     EventDispatchState(DispatcherClass::* function)(EventType*));
 
         // Internal helper method for dispatching Events
         template<typename EventType, typename DispatcherType>
-        static EventDispatchState dispatchIfNotExpired(void* event, 
+        static inline EventDispatchState dispatchIfNotExpired(Event* event, 
                                                        std::weak_ptr<DispatcherType> dispatcher, 
                                                        EventDispatchState(DispatcherType::* function)(EventType*));
     };

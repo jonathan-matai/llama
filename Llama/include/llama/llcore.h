@@ -27,11 +27,18 @@
 #endif
 
 #ifndef LLAMA_OS
-#define LLAMA_OS "Unknown"
+    #define LLAMA_OS "Unknown"
 #endif
 
 #ifndef LLAMA_CONFIG
-#define LLAMA_CONFIG "Unknown"
+    #define LLAMA_CONFIG "Unknown"
+#endif
+
+
+#ifdef LLAMA_DEBUG
+    #define LLAMA_DEBUG_ONLY(operation) operation
+#else
+    #define LLAMA_DEBUG_ONLY(operation)
 #endif
 
 // std::function

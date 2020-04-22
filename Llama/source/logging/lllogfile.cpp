@@ -38,7 +38,7 @@ llama::Logfile llama::createLogfile(std::string_view name, std::string_view path
 
 llama::Logfile& llama::logfile()
 {
-    static Logfile s_logfile = createLogfile("Llama Program", "log.html");
+    static Logfile s_logfile = createLogfile("Llama Engine", "log.html");
 
     return s_logfile;
 }

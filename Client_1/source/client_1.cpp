@@ -21,13 +21,32 @@ int main()
     socket->connectServer(buffer, "2020", i == 4 ? true : false);
     */
 
-    
-    
-    
+    /*
     llama::EventBus bus = llama::createEventBus();
 
-    std::shared_ptr<Calculator> calc = std::make_shared<Calculator>(bus);
+    llama::logfile()->print(llama::Colors::WHITE, "Created event bus!");
+
+    std::shared_ptr<CalculatorFilter> filter = std::make_shared<CalculatorFilter>(bus);
+
+    std::shared_ptr<Calculator> calc = std::make_shared<Calculator>(filter);
     std::shared_ptr<Console> con = std::make_shared<Console>(bus);
+
+    calc->addToDefaultBus();
+    con->addToDefaultBus();
+
+    con->run();
+    */
+    
+    
+    llama::EventBus calculatorBus = llama::createEventBus();
+    llama::EventBus printerbus = llama::createEventBus();
+
+    llama::logfile()->print(llama::Colors::WHITE, "Created event busses!");
+
+    std::shared_ptr<CalculatorBusFilter> filter = std::make_shared<CalculatorBusFilter>(calculatorBus, printerbus);
+
+    std::shared_ptr<Calculator> calc = std::make_shared<Calculator>(calculatorBus);
+    std::shared_ptr<Console> con = std::make_shared<Console>(printerbus);
 
     calc->addToDefaultBus();
     con->addToDefaultBus();

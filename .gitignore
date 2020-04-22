@@ -20,6 +20,9 @@
 *.bat
 *.ps1
 
+# Ignore platform-specific shortcuts
+*.lnk
+
 # Ignore Makefiles
 Makefile
 
