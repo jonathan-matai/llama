@@ -1,3 +1,4 @@
+#include "llevent.h"
 /*
   _    _
  | |  | |__ _ _ __  __ _
@@ -12,39 +13,75 @@
 
 
 template<typename EventType>
-std::unique_ptr<llama::Event> llama::makeEvent(EventType&& event)
+inline void llama::EventNode_T::postEvent(EventType&& event)
 {
     static_assert(std::is_base_of<llama::Event, EventType>::value, "EventType must derive from llama::Event");
-    return std::unique_ptr<Event>(static_cast<Event*>(std::make_unique<EventType>(event).release()));
+    handleEvent(std::unique_ptr<Event>(static_cast<Event*>(std::make_unique<EventType>(event).release())));
+}
+
+inline void llama::EventNode_T::handleEvent(std::unique_ptr<Event>&& event)
+{
+    forwardEvent(event.get());
 }
 
 template<typename EventType, typename DispatcherClass>
-llama::EventDispatcher llama::makeDispatcher(std::weak_ptr<DispatcherClass> dispatcher,
-                                      EventDispatchState(DispatcherClass::* function)(EventType*))
+inline llama::EventDispatchFunction::EventDispatchFunction(EventNode node,
+                                                           DispatcherClass* object,
+                                                           EventDispatchState(DispatcherClass::* function)(EventType*)) :
+    m_node(node),
+    m_dispatcherObject(object)
 {
-    return llama::EventDispatcher(EventType::s_eventTypeID, 
-                                  std::bind((EventDispatchState(*)(Event*, std::weak_ptr<DispatcherClass>, EventDispatchState(DispatcherClass::*)(EventType*)))
-                                            &llama::EventNode_T::dispatchIfNotExpired,
-                                            std::placeholders::_1, dispatcher, function));
+    static_assert(std::is_base_of<llama::Event, EventType>::value, "EventType must derive from llama::Event");
+    m_eventTypeID = EventType::s_eventTypeID;
+
+    m_node->addDispatchFunction(m_eventTypeID,
+                                {
+                                    object,
+                                    std::bind((EventDispatchState(*)(Event*, DispatcherClass*, EventDispatchState(DispatcherClass::*)(EventType*)))
+                                              &EventDispatchFunction::dispatchEvent,
+                                              std::placeholders::_1, object, function)
+                                });
 }
 
-template<typename EventType, typename DispatcherType>
-inline llama::EventDispatchState llama::EventNode_T::dispatchIfNotExpired(Event* event, 
-                                                                          std::weak_ptr<DispatcherType> dispatcher, 
-                                                                          EventDispatchState(DispatcherType::* function)(EventType*))
+template<typename DispatcherClass>
+inline llama::EventDispatchFunction::EventDispatchFunction(EventNode node, 
+                                                           EventFilter_T* object, 
+                                                           EventDispatchState(DispatcherClass::* function)(Event*, const EventNode_T::RawDispatchFunction&), 
+                                                           const EventNode_T::RawDispatchFunction& rawFunction) :
+    m_node(node),
+    m_dispatcherObject(object)
 {
-    if (dispatcher.expired())
-        return EventDispatchState::DISPATCHER_EXPIRED;
+    m_eventTypeID = Event::s_eventTypeID;
 
-    std::shared_ptr<DispatcherType> d = dispatcher.lock();
+    m_node->addDispatchFunction(m_eventTypeID,
+                                {
+                                    object,
+                                    std::bind(function,
+                                              reinterpret_cast<DispatcherClass*>(object), std::placeholders::_1, rawFunction)
+                                });
+}
 
-    if (d.get() == event->m_creator)
+template<typename EventType, typename DispatcherClass>
+inline llama::EventDispatchState llama::EventDispatchFunction::dispatchEvent(Event* event, 
+                                                                             DispatcherClass* dispatcher, 
+                                                                             EventDispatchState(DispatcherClass::* function)(EventType*))
+{
+    if (event->m_creator == dispatcher)
         return EventDispatchState::IGNORED;
 
-    return (d.get()->*function)(reinterpret_cast<EventType*>(event));
+    return (dispatcher->*function)(static_cast<EventType*>(event));
 }
 
-inline void llama::EventNode_T::postEvent(std::unique_ptr<Event>&& event)
+inline llama::EventDispatchFunction::~EventDispatchFunction()
 {
-    forwardEvent(event.get());
+    if(m_node != nullptr)
+        m_node->removeDispatchFunction(m_eventTypeID, m_dispatcherObject);
+}
+
+inline llama::EventDispatchFunction::EventDispatchFunction(EventDispatchFunction&& other) :
+    m_dispatcherObject(other.m_dispatcherObject),
+    m_eventTypeID(other.m_eventTypeID),
+    m_node(other.m_node)
+{
+    other.m_node = nullptr;
 }

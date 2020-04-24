@@ -45,17 +45,11 @@ namespace llama
         LLAMA_API EventFilter_T(EventNode parentNode, EventNode childNode,
                                 EventFilterMode uplinkFilterMode, EventFilterMode downlinkFilterMode);
 
-        // Add a dispatcher to the Node
-        // SHOULD BE ONLY CALLED FROM THE ENDPOINT AND ONLY IN ENDPOINT-NODE MODE
-        // @dispatcher      A dispatcher function created by the makeDispatcher() helper function
-        //                  (e.g. addDispatcher(makeDispatcher(weak_from_this(), &Receiver::method)))
-        LLAMA_API void addDispatcher(EventDispatcher&& dispatcher) override;
-
         // Post an event to the Node
         // SHOULD BE ONLY CALLED FROM THE ENDPOINT AND ONLY IN ENDPOINT-NODE MODE
         // @event           Post an event created by the makeEvent() helper function
         //                  (e.g. postEvent(makeEvent(ExampleEvent(...)))
-        LLAMA_API void postEvent(std::unique_ptr<Event>&& event) override;
+        LLAMA_API void handleEvent(std::unique_ptr<Event>&& event) override;
 
         // Post an event to the Node, that gets dispatched immediatly and returns DispatchState
         // SHOULD BE ONLY CALLED FROM THE ENDPOINT AND ONLY IN ENDPOINT-NODE MODE
@@ -88,36 +82,37 @@ namespace llama
             APPROVED,
         };
 
-        struct FilterRule
-        {
-            EventTypeID filterType;
-            std::function<FilterResult(Event*)> callback;
+        
 
-            FilterRule(EventTypeID type, const std::function<FilterResult(Event*)>& function) :
-                filterType(type), callback(function) { }
-        };
-
-        // Helper function to add a filter
+        // Add a new filter rule
         // @EventType           Must be a subclass of llama::Event
         // @EventFilterClass    Must be a subclass of llama::EventFilter_T
         // @function            The callback function for the filter rule
         template<typename EventType, typename EventFilterClass>
-        inline FilterRule makeFilterRule(FilterResult(EventFilterClass::* function)(EventType*));
+        inline void addFilterRule(FilterDirection direction, FilterResult(EventFilterClass::* function)(EventType*));
 
-        // Add a filter rule
-        // @direction           The direction in which the rule should be applied
-        // @filter              A filter rule created by the makeFilterRule() helper function
-        //                      (e.g. addFilterRule(makeFilterRule(&CustomFilter::filterRule)))
-        LLAMA_API void addFilterRule(FilterDirection direction, FilterRule filter);
+        
+        
 
         
 
 
     private:
 
+        struct FilterRule
+        {
+            EventTypeID filterType;
+            std::function<FilterResult(Event*)> callback;
+        };
+
+        LLAMA_API void handleFilterRule(FilterDirection direction, FilterRule filter);
+
+        LLAMA_API void addDispatchFunction(EventTypeID eventTypeID, const RawDispatchFunction& function) override;
+        LLAMA_API void removeDispatchFunction(EventTypeID eventTypeID, void* dispatcherObject) override;
+
         // Internal callback functions
-        EventDispatchState downlinkCallback(Event* event, EventDispatcher& dispatcher);
-        EventDispatchState uplinkCallback(Event* event, EventDispatcher& dispatcher);
+        EventDispatchState downlinkCallback(Event* event, const RawDispatchFunction& dispatcher);
+        EventDispatchState uplinkCallback(Event* event, const RawDispatchFunction& dispatcher);
 
         // Internal helper method for running filter functions
         template<typename EventType, typename EventFilterClass>
@@ -129,6 +124,8 @@ namespace llama
         std::vector<std::function<FilterResult(Event*)>> m_uplinkFilters;
         std::vector<std::function<FilterResult(Event*)>> m_downlinkFilters;
 
+        std::list<EventDispatchFunction> m_dispatchFunctions;
+
         EventNode m_parentNode, m_childNode;
     };
 
@@ -139,14 +136,18 @@ namespace llama
 // IMPLEMENTATION
 
 template<typename EventType, typename EventFilterClass>
-inline llama::EventFilter_T::FilterRule llama::EventFilter_T::makeFilterRule(FilterResult(EventFilterClass::* function)(EventType*))
+inline void llama::EventFilter_T::addFilterRule(FilterDirection direction, FilterResult(EventFilterClass::* function)(EventType*))
 {
     static_assert(std::is_base_of<llama::EventFilter_T, EventFilterClass>::value, "EventFilterClass must derive from llama::EventFilter_T");
+    static_assert(std::is_base_of<llama::Event, EventType>::value, "EventType must derive from llama::Event");
 
-    return FilterRule(EventType::s_eventTypeID,
-                          std::bind((FilterResult(*)(Event*, EventFilterClass*, FilterResult(EventFilterClass::*)(EventType*)))
-                                    &EventFilter_T::runFilterFunction,
-                                    std::placeholders::_1, static_cast<EventFilterClass*>(this), function));
+    handleFilterRule(direction,
+                     {
+                         EventType::s_eventTypeID,
+                         std::bind((FilterResult(*)(Event*, EventFilterClass*, FilterResult(EventFilterClass::*)(EventType*)))
+                                    & EventFilter_T::runFilterFunction,
+                                    std::placeholders::_1, static_cast<EventFilterClass*>(this), function)
+                     });
 }
 
 template<typename EventType, typename EventFilterClass>

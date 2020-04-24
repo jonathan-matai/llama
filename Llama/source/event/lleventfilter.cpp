@@ -16,19 +16,15 @@ llama::EventFilter_T::EventFilter_T(EventNode parentNode, EventNode childNode, E
     m_parentNode(parentNode),
     m_childNode(childNode)
 {
-    EventDispatcher downlinkDispatcher(InternalEventType::ANY_EVENT, std::bind(&EventNode_T::forwardEvent, m_childNode, std::placeholders::_1));
-    EventDispatcher uplinkDispatcher(InternalEventType::ANY_EVENT, std::bind(&EventNode_T::forwardEvent, m_parentNode, std::placeholders::_1));
+    RawDispatchFunction f = { this, std::bind(&EventNode_T::forwardEvent, m_childNode, std::placeholders::_1) };
+    RawDispatchFunction g = { this, std::bind(&EventNode_T::forwardEvent, m_parentNode, std::placeholders::_1) };
 
-    m_parentNode->addDispatcher({ InternalEventType::ANY_EVENT, std::bind((EventDispatchState(EventFilter_T::*)(void*, EventDispatcher&))
-                                                                      &EventFilter_T::downlinkCallback,
-                                                                      this, std::placeholders::_1, downlinkDispatcher) });
 
-    m_childNode->addDispatcher({ InternalEventType::ANY_EVENT, std::bind((EventDispatchState(EventFilter_T::*)(void*, EventDispatcher&))
-                                                                      &EventFilter_T::uplinkCallback,
-                                                                      this, std::placeholders::_1, uplinkDispatcher) });
+    m_dispatchFunctions.push_back(EventDispatchFunction(m_parentNode, this, &EventFilter_T::downlinkCallback, f));
+    m_dispatchFunctions.push_back(EventDispatchFunction(m_childNode, this, &EventFilter_T::uplinkCallback, g));
 }
 
-void llama::EventFilter_T::addFilterRule(FilterDirection direction, FilterRule filter)
+void llama::EventFilter_T::handleFilterRule(FilterDirection direction, FilterRule filter)
 {
     if (direction == FilterDirection::DOWNLINK || direction == FilterDirection::BIDIRCETIONAL)
     {
@@ -47,7 +43,29 @@ void llama::EventFilter_T::addFilterRule(FilterDirection direction, FilterRule f
     }
 }
 
-llama::EventDispatchState llama::EventFilter_T::downlinkCallback(Event* event, EventDispatcher& dispatcher)
+void llama::EventFilter_T::addDispatchFunction(EventTypeID eventTypeID, const RawDispatchFunction& function)
+{
+    if (eventTypeID == InternalEventType::ANY_EVENT || (m_downlinkFilters.size() > eventTypeID && m_downlinkFilters[eventTypeID] != nullptr))
+        m_dispatchFunctions.push_back(EventDispatchFunction(m_parentNode, this, &EventFilter_T::downlinkCallback, function));
+
+    else if (m_downlinkFilterMode == EventFilterMode::BLACKLIST)
+        m_parentNode->addDispatchFunction(eventTypeID, function); // Bridge filter
+}
+
+void llama::EventFilter_T::removeDispatchFunction(EventTypeID eventTypeID, void* dispatcherObject)
+{
+    if (eventTypeID == InternalEventType::ANY_EVENT || (m_downlinkFilters.size() > eventTypeID && m_downlinkFilters[eventTypeID] != nullptr))
+        for (auto a = m_dispatchFunctions.rbegin(); a != m_dispatchFunctions.rend();)
+            if (a->m_eventTypeID == eventTypeID && a->m_dispatcherObject == dispatcherObject)
+                m_dispatchFunctions.erase(std::next(a).base());
+            else
+                ++a;
+
+    else if (m_downlinkFilterMode == EventFilterMode::BLACKLIST)
+        m_parentNode->removeDispatchFunction(eventTypeID, dispatcherObject); // Bridge filter
+}
+
+llama::EventDispatchState llama::EventFilter_T::downlinkCallback(Event* event, const RawDispatchFunction& dispatcher)
 {
     if (event->m_creator == this)
         return EventDispatchState::IGNORED;
@@ -80,7 +98,7 @@ llama::EventDispatchState llama::EventFilter_T::downlinkCallback(Event* event, E
     return EventDispatchState::IGNORED;
 }
 
-llama::EventDispatchState llama::EventFilter_T::uplinkCallback(Event* event, EventDispatcher& dispatcher)
+llama::EventDispatchState llama::EventFilter_T::uplinkCallback(Event* event, const RawDispatchFunction& dispatcher)
 {
     if (event->m_creator == this)
         return EventDispatchState::IGNORED;
@@ -113,17 +131,7 @@ llama::EventDispatchState llama::EventFilter_T::uplinkCallback(Event* event, Eve
     return EventDispatchState::IGNORED;
 }
 
-void llama::EventFilter_T::addDispatcher(EventDispatcher&& dispatcher)
-{
-    if (m_downlinkFilters[dispatcher.eventType] != nullptr)
-        m_parentNode->addDispatcher({ dispatcher.eventType, std::bind((EventDispatchState(EventFilter_T::*)(void*, EventDispatcher&)) 
-                                                                      &EventFilter_T::downlinkCallback, 
-                                                                      this, std::placeholders::_1, dispatcher) });
-    else if(m_downlinkFilterMode == EventFilterMode::BLACKLIST)
-        m_parentNode->addDispatcher(std::move(dispatcher));
-}
-
-void llama::EventFilter_T::postEvent(std::unique_ptr<Event>&& event)
+void llama::EventFilter_T::handleEvent(std::unique_ptr<Event>&& event)
 {
     event->m_creator = this;
 
@@ -131,11 +139,13 @@ void llama::EventFilter_T::postEvent(std::unique_ptr<Event>&& event)
     {
         FilterResult a = m_uplinkFilters[event->m_type](event.get());
 
-        if(a == FilterResult::APPROVED || a == FilterResult::EDITED)
-            m_parentNode->postEvent(std::move(event));
-    }  
+        if (a == FilterResult::APPROVED || a == FilterResult::EDITED)
+            m_parentNode->handleEvent(std::move(event));
+    }
     else if (m_uplinkFilterMode == EventFilterMode::BLACKLIST)
-        m_parentNode->postEvent(std::move(event));
+        m_parentNode->handleEvent(std::move(event));
+    else
+        logfile()->print(Colors::YELLOW, LLAMA_DEBUG_INFO, "An Event of Type %d was blocked because Filter is in WHITELIST mode and no filter rule has been found!", event->m_type);
 }
 
 llama::EventDispatchState llama::EventFilter_T::forwardEvent(Event* event)
@@ -152,5 +162,6 @@ llama::EventDispatchState llama::EventFilter_T::forwardEvent(Event* event)
     else if (m_uplinkFilterMode == EventFilterMode::BLACKLIST)
         return m_parentNode->forwardEvent(event);
 
+    logfile()->print(Colors::YELLOW, LLAMA_DEBUG_INFO, "An Event of Type %d was blocked because Filter is in WHITELIST mode and no filter rule has been found!", event->m_type);
     return EventDispatchState::IGNORED;
 }

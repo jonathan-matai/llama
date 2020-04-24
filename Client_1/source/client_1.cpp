@@ -1,25 +1,62 @@
 ﻿#include <llama.h>
 
-#include "calculator.h"
+#include <events.h>
 
-#include <typeindex>
 #include <cstdio>
+
+class Console
+{
+    llama::EventNode m_bus;
+    llama::EventDispatchFunction m_func;
+
+public:
+
+    Console(llama::EventNode bus) :
+        m_bus(bus),
+        m_func(bus, this, &Console::print)
+    {
+    }
+
+    llama::EventDispatchState print(PrintEvent* e)
+    {
+        printf("Recieved following PrintEvent: %s\n", e->m_message);
+        return llama::EventDispatchState::DISPATCHED;
+    }
+
+    void run()
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            CalculatorEvent e;
+            scanf("%d %c %d", &e.m_a, &e.m_operator, &e.m_b);
+            m_bus->postEvent(CalculatorEvent(e));
+        }
+    }
+};
 
 int main()
 {
-    /*
+    llama::EventBus bus = llama::createEventBus();
+
+    llama::ClientSocket socket = llama::createClientSocket(bus);
+
     printf("Enter IP Version: ");
     int i;
     scanf_s("%d", &i);
 
-    llama::ClientSocket socket = llama::createClientSocket();
 
     printf("Enter hostname of server: ");
     char buffer[128];
     scanf_s("%s", buffer, 128);
 
     socket->connectServer(buffer, "2020", i == 4 ? true : false);
-    */
+    
+    Console con(bus);
+
+    con.run();
+
+    bus->postEvent(llama::CloseApplicationEvent());
+
 
     /*
     llama::EventBus bus = llama::createEventBus();
@@ -28,16 +65,13 @@ int main()
 
     std::shared_ptr<CalculatorFilter> filter = std::make_shared<CalculatorFilter>(bus);
 
-    std::shared_ptr<Calculator> calc = std::make_shared<Calculator>(filter);
-    std::shared_ptr<Console> con = std::make_shared<Console>(bus);
+    Calculator calc(filter);
+    Console con(bus);
 
-    calc->addToDefaultBus();
-    con->addToDefaultBus();
-
-    con->run();
+    con.run();
     */
     
-    
+    /*
     llama::EventBus calculatorBus = llama::createEventBus();
     llama::EventBus printerbus = llama::createEventBus();
 
@@ -48,23 +82,7 @@ int main()
     std::shared_ptr<Calculator> calc = std::make_shared<Calculator>(calculatorBus);
     std::shared_ptr<Console> con = std::make_shared<Console>(printerbus);
 
-    calc->addToDefaultBus();
-    con->addToDefaultBus();
-
     con->run();
-    /*
-    llama::Logfile log = llama::createLogfile(u8"Client_1", u8"log.html");
-
-    log->print(llama::Colors::YELLOW, u8"Übergrößenträger");
-    log->print(llama::Colors::MAGENTA, LLAMA_DEBUG_INFO, "The %s goes skrra", "ting");
-
-    llama::Table table("Playlist", llama::Colors::WHITE, { "Title", "Artist", "Genre" });
-    table.addRow(llama::Colors::GREEN, { "Owner of a Lonely Heart", "Yes", "Rock" });
-    table.addRow({ { llama::Colors::RED, "Don't beg" }, { llama::Colors::WHITE, "Synx, CruciA" }, { llama::Colors::BLUE, "Dubstep" } });
-    table.addRow(llama::Colors::WHITE, { "Halo", "Martin O'Donnell, Michael Salvatori", u8"Filmmusik" });
-
-    log->print(table);
-    log->print(table, true);
     */
     return 0;
 }

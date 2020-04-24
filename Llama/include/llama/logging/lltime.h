@@ -25,15 +25,15 @@ namespace llama
     class Timestamp;
 
     // Returns the time passed between two timestamps as a string
-    // start:  Start of measurement
-    // end:    End of measurement
-    // return: Time difference as formatted string (000.000 μs, 000.000 ms, 00.000 s, 00 min 00 s, 00 h 00 min)
+    // @start:      Start of measurement
+    // @end:        End of measurement
+    // @return:     Time difference as formatted string (000.000 μs, 000.000 ms, 00.000 s, 00 min 00 s, 00 h 00 min)
     LLAMA_API std::string duration(const Timestamp& start, const Timestamp& end);
 
     // Returns the time passed between two timestamps as an 64bit integer
-    // start:    Start of measurement
-    // end:      End of measurement
-    // accuracy: Format in which time is returned
+    // @start:      Start of measurement
+    // @end:        End of measurement
+    // @accuracy:   Format in which time is returned
     LLAMA_API uint64_t duration(const Timestamp& start, const Timestamp& end, TimeAccuracy accuracy);
 
     class Timestamp
@@ -44,10 +44,9 @@ namespace llama
         LLAMA_API Timestamp();
 
         // Returns a formatted time string of the timestamp
-        //
-        // format:   UTF-8 format string (see format parameter of strftime: https://en.cppreference.com/w/cpp/chrono/c/strftime)
-        // accuracy: Describes how accurate the timestamp should be printed
-        // return:   Returns an UTF-8-encoded Time string
+        // @format:     UTF-8 format string (see format parameter of strftime: https://en.cppreference.com/w/cpp/chrono/c/strftime)
+        // @accuracy:   Describes how accurate the timestamp should be printed
+        // @return:     Returns an UTF-8-encoded Time string
         LLAMA_API std::string getString(const char* format, TimeAccuracy accuracy) const;
 
         // Friend declarations

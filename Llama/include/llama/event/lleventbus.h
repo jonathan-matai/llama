@@ -20,19 +20,8 @@ namespace llama
     {
     public:
 
-        // Add a dispatcher to the Node
-        // @dispatcher      A dispatcher function created by the makeDispatcher() helper function
-        //                  (e.g. addDispatcher(makeDispatcher(weak_from_this(), &Receiver::method)))
-        virtual void addDispatcher(EventDispatcher&& dispatcher) override = 0;
+        virtual void handleEvent(std::unique_ptr<Event>&& event) override = 0;
 
-        // Post an event to the Node
-        // @event           Post an event created by the makeEvent() helper function
-        //                  (e.g. postEvent(makeEvent(ExampleEvent(...)))
-        virtual void postEvent(std::unique_ptr<Event>&& event) override = 0;
-
-        // Post an event to the Node, that gets dispatched immediatly and returns DispatchState
-        // @event           Post an event created by the makeEvent() helper function
-        //                  (e.g. postEvent(makeEvent(ExampleEvent(...)))
         virtual EventDispatchState forwardEvent(Event* event) override = 0;
 
     };

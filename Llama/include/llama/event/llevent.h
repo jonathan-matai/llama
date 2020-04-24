@@ -44,7 +44,6 @@ namespace llama
 
     enum class EventDispatchState
     {
-        DISPATCHER_EXPIRED = -1,
         IGNORED = 0,
         PROCESSED,
         DISPATCHED
@@ -57,13 +56,27 @@ namespace llama
         EventTypeID m_type;
         EventPriority m_priority;
         void* m_creator;
+        size_t m_size;
+
+        static const EventTypeID s_eventTypeID = InternalEventType::ANY_EVENT;
 
     protected:
 
-        Event(EventTypeID type, EventPriority priority, void* creator = nullptr) : 
+        Event(EventTypeID type, EventPriority priority, size_t size, void* creator = nullptr) : 
             m_type(type),
             m_priority(priority),
-            m_creator(creator) { }
+            m_creator(creator), 
+            m_size(size) { }
+    };
+
+
+    class CloseApplicationEvent : public Event
+    {
+    public:
+
+        CloseApplicationEvent() :
+            Event(InternalEventType::CLOSE_APPLICATION, EventPriority::IMMEDIATE, sizeof(CloseApplicationEvent))
+        { }
     };
 
     struct EventDispatcher
@@ -74,61 +87,84 @@ namespace llama
         EventDispatcher(EventTypeID type, const std::function<EventDispatchState(Event*)>& function) :
             eventType(type), callback(function) { }
     };
-
-    // Helper Function to pass an Event to an Event Node
-    // @EventType:          Must be a sublcass of llama::Event
-    // @event:              A newly constructed Event (e.g. makeEvent(ExampleEvent(...))
-    // @return:             A Event unique_ptr to pass to EventNode_T::postEvent()
-    template<typename EventType>
-    inline std::unique_ptr<Event> makeEvent(EventType&& event);
-
-    // Helper Function to pass a dispatcher Function to an Event Node
-    // @EventType:          Must be a subclass of llama::Event
-    // @DispatcherClass:    The class the Dispatcher Function is located in
-    // @dispatcher:         A weak_ptr to the object containing the dispatcher funtion (can be retrieved with weak_from_this())
-    // @function:           The dispatching function
-    //                      @param:     A pointer to the Event for dispatching
-    //                      @return:    The State of Dispatching, view Declaration of EventDispatchState for more information
-    template<typename EventType, typename DispatcherClass>
-    EventDispatcher makeDispatcher(std::weak_ptr<DispatcherClass> dispatcher,
-                                   EventDispatchState(DispatcherClass::* function)(EventType*));
     
 
     class EventNode_T
     {
-        
+        friend class EventDispatchFunction;
+        friend class EventFilter_T;
+        friend class ClientSocket_I;
+        friend class ServerSocket_I;
 
     public:
-
-        // Add a dispatcher to the Node
-        // @dispatcher      A dispatcher function created by the makeDispatcher() helper function
-        //                  (e.g. addDispatcher(makeDispatcher(weak_from_this(), &Receiver::method)))
-        virtual void addDispatcher(EventDispatcher&& dispatcher) = 0;
-
-        // Post an event to the Node
-        // @event           Post an event created by the makeEvent() helper function
-        //                  (e.g. postEvent(makeEvent(ExampleEvent(...)))
-        virtual inline void postEvent(std::unique_ptr<Event>&& event);
 
         // Post an event to the Node, that gets dispatched immediatly and returns DispatchState
         // @event           The forwarded element
         virtual EventDispatchState forwardEvent(Event* event) = 0;
 
-    private:
+        // Post an event to the Node
+        // @EventType       Must be a subclass of llama::Event
+        // @event           Post an event to the node
+        template<typename EventType>
+        inline void postEvent(EventType&& event);
 
-        // Friend declaration
-        template<typename EventType, typename DispatcherClass>
-        friend inline EventDispatcher makeDispatcher(std::weak_ptr<DispatcherClass> dispatcher,
-                                                     EventDispatchState(DispatcherClass::* function)(EventType*));
+    protected:
 
-        // Internal helper method for dispatching Events
-        template<typename EventType, typename DispatcherType>
-        static inline EventDispatchState dispatchIfNotExpired(Event* event, 
-                                                       std::weak_ptr<DispatcherType> dispatcher, 
-                                                       EventDispatchState(DispatcherType::* function)(EventType*));
+        virtual inline void handleEvent(std::unique_ptr<Event>&& event);
+
+        struct RawDispatchFunction
+        {
+            void* dispatcherObject;
+            std::function<EventDispatchState(Event*)> callback;
+        };
+
+        // Gets called upon creating an EventDispatchFunction
+        // Add a new dispatch function to the Node
+        // @eventTypeID         The Type of Event that should get dispatched, can be InternalEventType::ANY_EVENT
+        // @function            The dispatching function, see definiton of RawDispatchFunction
+        virtual void addDispatchFunction(EventTypeID eventTypeID, const RawDispatchFunction& function) = 0;
+
+        // Gets called upon destroying an EventDispatchFunction
+        // Remove all Dispatch Functions belonging to dispatcherObject with the type EventTypeID
+        // @eventTypeID         The Type of Event that the function dispatched
+        // @dispatcherObject    The object of the function
+        virtual void removeDispatchFunction(EventTypeID eventTypeID, void* dispatcherObject) = 0;
     };
 
     typedef std::shared_ptr<EventNode_T> EventNode;
+
+    class EventDispatchFunction
+    {
+        friend class EventFilter_T;
+    public:
+
+        template<typename EventType, typename DispatcherClass>
+        EventDispatchFunction(EventNode node,
+                              DispatcherClass* object,
+                              EventDispatchState(DispatcherClass::* function)(EventType*));
+
+        inline ~EventDispatchFunction();
+
+        inline EventDispatchFunction(EventDispatchFunction&& other);
+        EventDispatchFunction(const EventDispatchFunction&) = delete;
+
+    private:
+
+        template<typename DispatcherClass>
+        EventDispatchFunction(EventNode node,
+                              EventFilter_T* object,
+                              EventDispatchState(DispatcherClass::* function)(Event*, const EventNode_T::RawDispatchFunction&),
+                              const EventNode_T::RawDispatchFunction& rawFunction);
+
+        template<typename EventType, typename DispatcherClass>
+        static inline EventDispatchState dispatchEvent(Event* event,
+                                                       DispatcherClass* dispatcher,
+                                                       EventDispatchState(DispatcherClass::* function)(EventType*));
+
+        EventNode m_node;
+        void* m_dispatcherObject;
+        EventTypeID m_eventTypeID;
+    };
 }
 
 #include "llevent.inl"
