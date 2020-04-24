@@ -133,6 +133,8 @@ namespace llama
 
     typedef std::shared_ptr<EventNode_T> EventNode;
 
+    class EventFilter_T;
+
     class EventDispatchFunction
     {
         friend class EventFilter_T;

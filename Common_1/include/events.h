@@ -32,7 +32,7 @@ struct PrintEvent : public llama::Event
     PrintEvent(std::string_view message) :
         llama::Event(PRINT_EVENT, llama::EventPriority::IMMEDIATE, sizeof(PrintEvent))
     {
-        memcpy_s(m_message, 64, message.data(), message.size());
+        memcpy(m_message, message.data(), message.size() < 64 ? message.size() : 64);
         m_message[message.size()] = '\0';
     }
 };

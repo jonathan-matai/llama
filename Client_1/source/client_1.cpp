@@ -42,12 +42,12 @@ int main()
 
     printf("Enter IP Version: ");
     int i;
-    scanf_s("%d", &i);
+    scanf("%d", &i);
 
 
     printf("Enter hostname of server: ");
     char buffer[128];
-    scanf_s("%s", buffer, 128);
+    scanf("%128s", buffer);
 
     socket->connectServer(buffer, "2020", i == 4 ? true : false);
     

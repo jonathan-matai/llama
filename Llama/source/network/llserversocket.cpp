@@ -120,7 +120,7 @@ void llama::ServerSocket_I::receiveFromClients()
             return;
 
         Event* copy = reinterpret_cast<Event*>(::operator new(event->m_size));
-        memcpy_s(copy, event->m_size, event, event->m_size);
+        memcpy(copy, event, event->m_size);
         copy->m_creator = this;
 
         m_node->handleEvent(std::unique_ptr<Event>(copy));
