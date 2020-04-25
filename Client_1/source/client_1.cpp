@@ -36,6 +36,7 @@ public:
 
 int main()
 {
+    /*
     llama::EventBus bus = llama::createEventBus();
 
     llama::ClientSocket socket = llama::createClientSocket(bus);
@@ -56,33 +57,9 @@ int main()
     con.run();
 
     bus->postEvent(llama::CloseApplicationEvent());
-
-
-    /*
-    llama::EventBus bus = llama::createEventBus();
-
-    llama::logfile()->print(llama::Colors::WHITE, "Created event bus!");
-
-    std::shared_ptr<CalculatorFilter> filter = std::make_shared<CalculatorFilter>(bus);
-
-    Calculator calc(filter);
-    Console con(bus);
-
-    con.run();
     */
+
+    llama::GraphicsDevice device = llama::createGraphicsDevice();
     
-    /*
-    llama::EventBus calculatorBus = llama::createEventBus();
-    llama::EventBus printerbus = llama::createEventBus();
-
-    llama::logfile()->print(llama::Colors::WHITE, "Created event busses!");
-
-    std::shared_ptr<CalculatorBusFilter> filter = std::make_shared<CalculatorBusFilter>(calculatorBus, printerbus);
-
-    std::shared_ptr<Calculator> calc = std::make_shared<Calculator>(calculatorBus);
-    std::shared_ptr<Console> con = std::make_shared<Console>(printerbus);
-
-    con->run();
-    */
     return 0;
 }

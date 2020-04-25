@@ -19,3 +19,4 @@
 #include "llama/event/lleventfilter.h"
 #include "llama/network/llclientsocket.h"
 #include "llama/network/llserversocket.h"
+#include "llama/graphics/llgraphics.h"

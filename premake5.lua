@@ -60,7 +60,8 @@ workspace "Llama"
         includedirs
         {
             "%{prj.name}/include/llama",
-            "%{prj.name}/vendor/asio/asio/include"
+            "%{prj.name}/vendor/asio/asio/include",
+            "$(VULKAN_SDK)/Include"
         }
 
         files
@@ -69,6 +70,11 @@ workspace "Llama"
             "%{prj.name}/include/**.inl",
             "%{prj.name}/source/**.cpp",
             "%{prj.name}/source/**.h"
+        }
+
+        links
+        {
+            "$(VULKAN_SDK)/Lib/vulkan-1.lib"
         }
 
         defines { "LLAMA_BUILD" }
