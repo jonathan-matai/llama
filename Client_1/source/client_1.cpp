@@ -63,7 +63,7 @@ int main()
 
     llama::GraphicsDevice device = llama::createGraphicsDevice();
     
-
+    llama::WindowContext context = llama::createWindowContext(window, device);
 
     return 0;
 }

@@ -70,7 +70,8 @@ workspace "Llama"
             "%{prj.name}/include/llama",
             "%{prj.name}/vendor/asio/asio/include",
             "$(VULKAN_SDK)/Include",
-            "%{prj.name}/vendor/glfw/include"
+            "%{prj.name}/vendor/glfw/include",
+            "%{prj.name}/vendor/vma"
         }
 
         files

@@ -12,6 +12,8 @@
 
 #pragma once
 
+struct GLFWwindow;
+
 namespace llama
 {
     struct WindowDesc
@@ -32,6 +34,8 @@ namespace llama
     public:
 
         virtual ~Window_T() = default;
+
+        virtual GLFWwindow* getGLFWWindowHandle() const = 0;
     };
 
     typedef std::shared_ptr<Window_T> Window;

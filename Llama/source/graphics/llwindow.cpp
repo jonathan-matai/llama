@@ -18,6 +18,8 @@ namespace llama
 
         static void debugCallback(int error, const char* description);
 
+        GLFWwindow* getGLFWWindowHandle() const override;
+
         GLFWwindow* m_window;
     };
 }
@@ -52,6 +54,11 @@ llama::Window_I::~Window_I()
 void llama::Window_I::debugCallback(int error, const char* description)
 {
     logfile()->print(Colors::RED, "GLFW Error %x: %s", error, description);
+}
+
+GLFWwindow* llama::Window_I::getGLFWWindowHandle() const
+{
+    return m_window;
 }
 
 llama::Window llama::createWindow(const WindowDesc& description)

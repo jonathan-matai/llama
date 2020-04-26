@@ -1,7 +1,7 @@
 #include "llcore.h"
 #include "graphics/llgraphics.h"
 
-#include "llvulkangraphics.h"
+#include "vulkan/llgraphics_vk.h"
 
 llama::GraphicsDevice llama::createGraphicsDevice()
 {

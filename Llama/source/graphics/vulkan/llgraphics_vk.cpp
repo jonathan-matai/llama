@@ -1,18 +1,29 @@
 #include "llcore.h"
 
-#include "llvulkangraphics.h"
+#include "llgraphics_vk.h"
 
 #include "math/llmath.h"
 
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+#include <GLFW/glfw3.h>
 
 
 llama::GraphicsDevice_IVulkan::GraphicsDevice_IVulkan()
 {
-    createVulkanInstance({ "VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_monitor" }, { "VK_KHR_surface", "VK_KHR_win32_surface", "VK_EXT_debug_utils" });
+    std::vector<std::string_view> extensions = { "VK_EXT_debug_utils" };
+
+    
+
+    uint32_t glfwExtensionCount;
+    const char** glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+    for (uint32_t i = 0; i < glfwExtensionCount; ++i)
+        extensions.push_back(glfwExtensions[i]);
+
+    createVulkanInstance({ "VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_monitor" }, std::initializer_list<std::string_view>(extensions.data(), extensions.data() + extensions.size()));
     createVulkanDebugUtilsMessenger();
     createVulkanPhysicalDevice();
-    createVulkanLogicalDevice({ }, { });
+    createVulkanLogicalDevice({ "VK_LAYER_KHRONOS_validation" }, { "VK_KHR_swapchain" });
+    createMemoryAllocator();
 }
 
 llama::GraphicsDevice_IVulkan::~GraphicsDevice_IVulkan()
@@ -233,7 +244,7 @@ bool llama::GraphicsDevice_IVulkan::createVulkanLogicalDevice(std::initializer_l
     
     vk::PhysicalDeviceFeatures features = { };
 
-    QueueManager manager(m_physicalDevice);
+    QueueManager manager(m_physicalDevice, m_vulkanInstance.get());
 
     manager.requestQueue(vk::QueueFlagBits::eGraphics, true, &m_graphicsQueue);
     manager.requestQueue(vk::QueueFlagBits::eTransfer, false, &m_transferQueue);
@@ -250,6 +261,41 @@ bool llama::GraphicsDevice_IVulkan::createVulkanLogicalDevice(std::initializer_l
         return false;
 
     VULKAN_HPP_DEFAULT_DISPATCHER.init(m_logicalDevice.get());
+
+    manager.writeQueues(m_logicalDevice.get());
+
+    return false;
+}
+
+bool llama::GraphicsDevice_IVulkan::createMemoryAllocator()
+{
+    m_functions = vma::VulkanFunctions(VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceProperties,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkGetPhysicalDeviceMemoryProperties,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkAllocateMemory,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkFreeMemory,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkMapMemory,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkUnmapMemory,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkFlushMappedMemoryRanges,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkInvalidateMappedMemoryRanges,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkBindBufferMemory,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkBindImageMemory,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkGetBufferMemoryRequirements,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkGetImageMemoryRequirements,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkCreateBuffer,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkDestroyBuffer,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkCreateImage,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkDestroyImage,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkCmdCopyBuffer,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkGetBufferMemoryRequirements2KHR,
+                                       VULKAN_HPP_DEFAULT_DISPATCHER.vkGetImageMemoryRequirements2KHR);
+
+
+    if (!assert_vulkan(vma::createAllocator(vma::AllocatorCreateInfo(vma::AllocatorCreateFlags(), // Flags
+                                                                     m_physicalDevice,
+                                                                     m_logicalDevice.get(),
+                                                                     0, nullptr, nullptr, 0, nullptr, 
+                                                                     &m_functions)), m_memoryAllocator, LLAMA_DEBUG_INFO, "vma::createAllocator() failed!"))
+        return false;
 
     return false;
 }
@@ -275,24 +321,30 @@ VkBool32 llama::GraphicsDevice_IVulkan::debugCallback(VkDebugUtilsMessageSeverit
     return VK_FALSE;
 }
 
-llama::GraphicsDevice_IVulkan::QueueManager::QueueManager(vk::PhysicalDevice physicalDevice) :
-    m_properties(physicalDevice.getQueueFamilyProperties())
+llama::GraphicsDevice_IVulkan::QueueManager::QueueManager(vk::PhysicalDevice physicalDevice, vk::Instance instance) :
+    m_properties(physicalDevice.getQueueFamilyProperties()),
+    m_vulkanInstance(instance),
+    m_phyiscalDevice(physicalDevice)
 {
     m_queueCounts.resize(m_properties.size());
 }
 
-bool llama::GraphicsDevice_IVulkan::QueueManager::requestQueue(vk::QueueFlags flags, bool needsPresent, VulkanQueue* future)
+bool llama::GraphicsDevice_IVulkan::QueueManager::requestQueue(vk::QueueFlags flags, bool needsPresent, VulkanQueue* future, float priority)
 {
     std::pair bestScore(0xffffffff, uint8_t(32));
 
     for (uint32_t i = 0; i < m_properties.size(); ++i)
     {
         // If all Queues are already in use skip family
-        if (m_queueCounts[i] >= m_properties[i].queueCount)
+        if (m_queueCounts[i].first >= m_properties[i].queueCount)
             continue;
 
         // If family doesnt have all flags, skip
         if ((flags & ~m_properties[i].queueFlags) != vk::QueueFlags{ })
+            continue;
+
+        // If queue needs to present but can't present
+        if (needsPresent && glfwGetPhysicalDevicePresentationSupport(m_vulkanInstance, m_phyiscalDevice, i) == VK_FALSE)
             continue;
 
         uint8_t score = hammingWeight(static_cast<uint32_t>(~flags & m_properties[i].queueFlags));
@@ -304,7 +356,8 @@ bool llama::GraphicsDevice_IVulkan::QueueManager::requestQueue(vk::QueueFlags fl
     if (bestScore.first != 0xffffffff)
     {
         future->queueFamily = bestScore.first;
-        m_outputQueues.push_back(std::make_pair(future, m_queueCounts[bestScore.first]++));
+        m_outputQueues.push_back(std::make_pair(future, m_queueCounts[bestScore.first].first++));
+        m_queueCounts[bestScore.first].second.push_back(priority);
         return true;
     }
 
@@ -316,8 +369,14 @@ std::vector<vk::DeviceQueueCreateInfo> llama::GraphicsDevice_IVulkan::QueueManag
     std::vector<vk::DeviceQueueCreateInfo> result;
 
     for (uint32_t i = 0; i < m_queueCounts.size(); ++i)
-        if (m_queueCounts[i] > 0)
-            result.push_back(vk::DeviceQueueCreateInfo({ }, i, m_queueCounts[i], s_vulkanQueuePriorities.data()));
+        if (m_queueCounts[i].first > 0)
+            result.push_back(vk::DeviceQueueCreateInfo({ }, i, m_queueCounts[i].first, m_queueCounts[i].second.data()));
 
     return std::move(result);
+}
+
+void llama::GraphicsDevice_IVulkan::QueueManager::writeQueues(vk::Device device)
+{
+    for (const auto& a : m_outputQueues)
+        a.first->queueHandle = device.getQueue(a.first->queueFamily, a.second);
 }

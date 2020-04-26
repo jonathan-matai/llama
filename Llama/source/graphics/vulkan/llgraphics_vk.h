@@ -5,6 +5,7 @@
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
+#include <vk_mem_alloc.hpp>
 
 namespace llama
 {
@@ -59,13 +60,21 @@ namespace llama
     template <typename ReturnType>
     inline bool assert_vulkan(vk::ResultValue<ReturnType>&& result, ReturnType& output, llama::DebugInfo debugInfo, std::string_view message, llama::Color color = Colors::RED)
     {
-        if (result.result == vk::Result::eSuccess)
+        if (assert_vulkan(result.result, debugInfo, message, color))
         {
             output = std::move(result.value);
             return true;
         }
+         
+        return false;
+    }
 
-        logfile()->print(color, debugInfo, "%*s (%s)", message.size(), message.data(), vkResultToString(result.result));
+    inline bool assert_vulkan(vk::Result result, llama::DebugInfo debugInfo, std::string_view message, llama::Color color = Colors::RED)
+    {
+        if (result == vk::Result::eSuccess)
+            return true;
+
+        logfile()->print(color, debugInfo, "%*s (%s)", message.size(), message.data(), vkResultToString(result));
         return false;
     }
 
@@ -93,22 +102,33 @@ namespace llama
         bool createVulkanLogicalDevice(std::initializer_list<std::string_view> deviceLayers,
                                        std::initializer_list<std::string_view> deviceExtensions);
 
+        bool createMemoryAllocator();
+
+        inline vk::Instance getInstance() const { return m_vulkanInstance.get(); }
+        inline vk::Device getDevice() const { return m_logicalDevice.get(); }
+        inline vk::PhysicalDevice getPhysicalDevice() const { return m_physicalDevice; }
+        inline vma::Allocator getAllocator() const { return m_memoryAllocator; }
+
     private:
 
         class QueueManager
         {
         public:
 
-            QueueManager(vk::PhysicalDevice physicalDevice);
+            QueueManager(vk::PhysicalDevice physicalDevice, vk::Instance instance);
 
-            bool requestQueue(vk::QueueFlags flags, bool needsPresent, VulkanQueue* future);
+            bool requestQueue(vk::QueueFlags flags, bool needsPresent, VulkanQueue* future, float priority = 1.0f);
 
             std::vector<vk::DeviceQueueCreateInfo> getQueueInformation() const;
 
+            void writeQueues(vk::Device device);
+
         private:
 
+            vk::Instance m_vulkanInstance;
+            vk::PhysicalDevice m_phyiscalDevice;
             std::vector<vk::QueueFamilyProperties> m_properties;
-            std::vector<uint8_t> m_queueCounts;
+            std::vector<std::pair<uint32_t, std::vector<float>>> m_queueCounts;
             std::vector<std::pair<VulkanQueue*, uint32_t>> m_outputQueues;
         };
 
@@ -117,16 +137,16 @@ namespace llama
                                       const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                                       void* pUserData);
 
-        static constexpr std::array<float, 16> s_vulkanQueuePriorities{1.0f};
-
         vk::DynamicLoader m_vulkanLoader;
         vk::UniqueInstance m_vulkanInstance;
-        vk::DispatchLoaderDynamic m_dynamicLoader;
         vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::DispatchLoaderDynamic> m_debugMessenger;
         vk::PhysicalDevice m_physicalDevice;
         vk::UniqueDevice m_logicalDevice;
 
         VulkanQueue m_graphicsQueue;
         VulkanQueue m_transferQueue;
+
+        vma::VulkanFunctions m_functions;
+        vma::Allocator m_memoryAllocator;
     };
 }
