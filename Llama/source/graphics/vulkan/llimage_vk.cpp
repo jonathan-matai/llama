@@ -10,6 +10,7 @@ llama::Image_Vulkan::Image_Vulkan(std::shared_ptr<GraphicsDevice_IVulkan> device
 
     //vmaCreateImage()
     
+
     assert_vulkan(device->getDevice().createImageUnique(vk::ImageCreateInfo({}, // Flags
                                                                             vk::ImageType::e2D, // Image Type
                                                                             format, // Format
