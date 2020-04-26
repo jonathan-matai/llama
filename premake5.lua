@@ -49,6 +49,12 @@ workspace "Llama"
 
         defines { "LLAMA_RELEASE", "NDEBUG", "LLAMA_CONFIG=\"Release\"" }
 
+    group "vendor"
+
+        include "Llama/vendor"
+
+    group ""
+
     project "Llama"
 
         kind "SharedLib"
@@ -61,7 +67,8 @@ workspace "Llama"
         {
             "%{prj.name}/include/llama",
             "%{prj.name}/vendor/asio/asio/include",
-            "$(VULKAN_SDK)/Include"
+            "$(VULKAN_SDK)/Include",
+            "%{prj.name}/vendor/glfw/include"
         }
 
         files
@@ -74,7 +81,8 @@ workspace "Llama"
 
         links
         {
-            "$(VULKAN_SDK)/Lib/vulkan-1.lib"
+            "$(VULKAN_SDK)/Lib/vulkan-1.lib",
+            "glfw"
         }
 
         defines { "LLAMA_BUILD" }

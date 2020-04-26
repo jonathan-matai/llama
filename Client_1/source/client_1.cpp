@@ -59,7 +59,11 @@ int main()
     bus->postEvent(llama::CloseApplicationEvent());
     */
 
+    llama::Window window = llama::createWindow(llama::WindowDesc());
+
     llama::GraphicsDevice device = llama::createGraphicsDevice();
     
+
+
     return 0;
 }

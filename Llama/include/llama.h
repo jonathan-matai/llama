@@ -20,3 +20,5 @@
 #include "llama/network/llclientsocket.h"
 #include "llama/network/llserversocket.h"
 #include "llama/graphics/llgraphics.h"
+#include "llama/graphics/llwindow.h"
+#include "llama/math/llmath.h"
