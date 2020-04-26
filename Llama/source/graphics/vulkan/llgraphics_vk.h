@@ -92,8 +92,8 @@ namespace llama
 
         ~GraphicsDevice_IVulkan() override;
 
-        bool createVulkanInstance(std::initializer_list<std::string_view> instanceLayers,
-                                  std::initializer_list<std::string_view> instanceExtensions);
+        bool createVulkanInstance(const std::vector<std::string_view>& instanceLayers,
+                                  const std::vector<std::string_view>& instanceExtensions);
 
         bool createVulkanDebugUtilsMessenger();
 

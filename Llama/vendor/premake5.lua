@@ -3,6 +3,8 @@ project "glfw"
     location "glfw"
     kind "StaticLib"
 
+	buildoptions "-fPIC"
+
 
     files{
         "glfw/include/GLFW/glfw3.h",

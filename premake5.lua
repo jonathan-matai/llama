@@ -37,7 +37,7 @@ workspace "Llama"
 
         buildoptions { "-march=native" }
 
-        linkoptions { "-pthread", "-lstdc++fs" }
+        linkoptions { "-pthread", "-lstdc++fs", "-Wl,--no-as-needed", "-ldl" }
 
     filter "configurations:Debug"
 
