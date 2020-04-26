@@ -14,9 +14,10 @@ size_t llama::stringLength(std::string_view string)
 }
 
 
-#define VMA_STATIC_VULKAN_FUNCTIONS 0
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
+
+#define VMA_STATIC_VULKAN_FUNCTIONS 0
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.hpp>
 
