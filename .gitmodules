@@ -1,6 +1,6 @@
 [submodule "Llama/vendor/asio"]
 	path = Llama/vendor/asio
 	url = https://github.com/chriskohlhoff/asio.git
-[submodule "Llama\\vendor\\glfw"]
-	path = Llama\\vendor\\glfw
-	url = https://github.com/glfw/glfw
+[submodule "Llama/vendor/glfw"]
+	path = Llama/vendor/glfw
+	url = https://github.com/glfw/glfw.git
