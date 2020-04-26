@@ -35,6 +35,8 @@ workspace "Llama"
 
         defines { "LLAMA_OS_LINUX", "LLAMA_OS=\"Linux\"" }
 
+        buildoptions { "-march=native" }
+
         linkoptions { "-pthread", "-lstdc++fs" }
 
     filter "configurations:Debug"
