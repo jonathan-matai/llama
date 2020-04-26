@@ -3,6 +3,7 @@
 #include "graphics/llgraphics.h"
 
 #define VULKAN_HPP_NO_EXCEPTIONS
+#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #include <vulkan/vulkan.hpp>
 
 namespace llama
@@ -118,6 +119,7 @@ namespace llama
 
         static constexpr std::array<float, 16> s_vulkanQueuePriorities{1.0f};
 
+        vk::DynamicLoader m_vulkanLoader;
         vk::UniqueInstance m_vulkanInstance;
         vk::DispatchLoaderDynamic m_dynamicLoader;
         vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::DispatchLoaderDynamic> m_debugMessenger;

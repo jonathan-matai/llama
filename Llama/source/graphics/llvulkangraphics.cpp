@@ -4,22 +4,7 @@
 
 #include "math/llmath.h"
 
-/*
-VKAPI_ATTR VkResult VKAPI_CALL vkCreateDebugUtilsMessengerEXT(VkInstance                                 instance,
-                                                              const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
-                                                              const VkAllocationCallbacks* pAllocator,
-                                                              VkDebugUtilsMessengerEXT* pMessenger)
-{
-    return ((PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"))(instance, pCreateInfo, pAllocator, pMessenger);
-}
-
-VKAPI_ATTR void VKAPI_CALL vkDestroyDebugUtilsMessengerEXT(VkInstance                    instance,
-                                                           VkDebugUtilsMessengerEXT      messenger,
-                                                           VkAllocationCallbacks const* pAllocator)
-{
-    return ((PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"))(instance, messenger, pAllocator);
-}
-*/
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
 
 llama::GraphicsDevice_IVulkan::GraphicsDevice_IVulkan()
@@ -39,6 +24,9 @@ bool llama::GraphicsDevice_IVulkan::createVulkanInstance(std::initializer_list<s
                                                          std::initializer_list<std::string_view> instanceExtensions)
 {
     Timestamp start;
+
+    PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr = m_vulkanLoader.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(vkGetInstanceProcAddr);
 
     std::vector<const char*> enabledLayers;
     std::vector<const char*> enabledExtensions;
@@ -100,6 +88,8 @@ bool llama::GraphicsDevice_IVulkan::createVulkanInstance(std::initializer_list<s
     if (!assert_vulkan(vk::createInstanceUnique(instance_ci), m_vulkanInstance, LLAMA_DEBUG_INFO, "vk::createInstance() failed! This device may not support Vulkan!"))
         return false;
 
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(m_vulkanInstance.get());
+
     logfile()->print(Colors::GREEN, "Created Vulkan Instance! (%s)", duration(start, Timestamp()).c_str());
 
     return true;
@@ -117,10 +107,9 @@ bool llama::GraphicsDevice_IVulkan::createVulkanDebugUtilsMessenger()
                                                                   &GraphicsDevice_IVulkan::debugCallback, // Callback
                                                                   nullptr /* User Data*/);
 
-    m_dynamicLoader.vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_vulkanInstance.get(), "vkCreateDebugUtilsMessengerEXT");
-    m_dynamicLoader.vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(m_vulkanInstance.get(), "vkDestroyDebugUtilsMessengerEXT");
+    
 
-    if(!assert_vulkan(m_vulkanInstance->createDebugUtilsMessengerEXTUnique(debug_utils_messenger_ci, nullptr, m_dynamicLoader), m_debugMessenger,
+    if(!assert_vulkan(m_vulkanInstance->createDebugUtilsMessengerEXTUnique(debug_utils_messenger_ci, nullptr), m_debugMessenger,
                       LLAMA_DEBUG_INFO, "vk::Instance::createDebugUtilsMessengerEXTUnique() failed!"))
         return false;
 
@@ -259,6 +248,8 @@ bool llama::GraphicsDevice_IVulkan::createVulkanLogicalDevice(std::initializer_l
 
     if (!assert_vulkan(m_physicalDevice.createDeviceUnique(device_ci), m_logicalDevice, LLAMA_DEBUG_INFO, "vk::createDevice() failed!"))
         return false;
+
+    VULKAN_HPP_DEFAULT_DISPATCHER.init(m_logicalDevice.get());
 
     return false;
 }

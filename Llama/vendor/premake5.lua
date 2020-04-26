@@ -16,9 +16,9 @@ project "glfw"
 		"glfw/src/window.c"
     }
 
-    defines {
-        "_GLFW_VULKAN_STATIC"
-    }
+    --defines {
+        --"_GLFW_VULKAN_STATIC"
+    --}
 
     filter "system:windows"
 

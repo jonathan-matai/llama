@@ -1,6 +1,8 @@
 #include "llcore.h"
 #include "graphics/llwindow.h"
 
+#define GLFW_INCLUDE_VULKAN
+
 #include <GLFW/glfw3.h>
 
 namespace llama

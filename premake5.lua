@@ -83,7 +83,6 @@ workspace "Llama"
 
         links
         {
-            "$(VULKAN_SDK)/Lib/vulkan-1.lib",
             "glfw"
         }
 
