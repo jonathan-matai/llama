@@ -10,15 +10,23 @@ namespace llama
     public:
 
         Image_Vulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, 
-                     uint32_t width, uint32_t height, 
-                     vk::Format format, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags memoryFlags);
-        virtual ~Image_Vulkan() { }
+                     uint32_t width, 
+                     uint32_t height, 
+                     vk::Format format, 
+                     vk::ImageUsageFlags usage, 
+                     vma::MemoryUsage memoryType,
+                     vk::SampleCountFlagBits msaa = vk::SampleCountFlagBits::e1);
+        virtual ~Image_Vulkan();
 
-        inline vk::Image getImage() const { return m_image.get(); }
+        static vk::Format findFormat(vk::PhysicalDevice physicalDevice, std::initializer_list<vk::Format> options, vk::ImageTiling tiling, vk::FormatFeatureFlags featues);
 
-    private:
+        inline vk::Image getImage() const { return m_image.first; }
 
-        vk::UniqueImage m_image;
+    protected:
+
+        std::shared_ptr<GraphicsDevice_IVulkan> m_device;
+        std::pair<vk::Image, vma::Allocation> m_image;
+        vk::Format m_format;
 
     };
 
@@ -28,6 +36,16 @@ namespace llama
         
         DepthImage_Vulkan(std::shared_ptr<GraphicsDevice_IVulkan> device,
                           uint32_t width, uint32_t height,
+                          vk::SampleCountFlagBits msaaLevel);
+    };
+
+    class ColorImage_Vulkan : public Image_Vulkan
+    {
+    public:
+
+        ColorImage_Vulkan(std::shared_ptr<GraphicsDevice_IVulkan> device,
+                          uint32_t width, uint32_t height,
+                          vk::Format format,
                           vk::SampleCountFlagBits msaaLevel);
     };
 }

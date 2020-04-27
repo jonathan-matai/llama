@@ -28,7 +28,60 @@ llama::GraphicsDevice_IVulkan::GraphicsDevice_IVulkan()
 
 llama::GraphicsDevice_IVulkan::~GraphicsDevice_IVulkan()
 {
+    m_memoryAllocator.destroy();
+}
+
+bool llama::GraphicsDevice_IVulkan::executeOnDevice(std::function<void(vk::CommandBuffer)> commands, VulkanQueue queue)
+{
+    // Lock Command Buffer
+    std::lock_guard lock(queue.queueFamily->m_commandPoolMutex);
+
+
+    std::vector<vk::UniqueCommandBuffer> buffer;
+
+    // Create Command Buffer
+    if (!assert_vulkan(m_logicalDevice->allocateCommandBuffersUnique(vk::CommandBufferAllocateInfo(queue.queueFamily->m_commandPool.get(),
+                                                                                                   vk::CommandBufferLevel::ePrimary,
+                                                                                                   1)), buffer,
+                       LLAMA_DEBUG_INFO, "vk::Device::allocateCommandBuffersUnique() failed!"))
+        return false;
+
+    // Start Recording
+    if (!assert_vulkan(buffer[0]->begin(vk::CommandBufferBeginInfo(vk::CommandBufferUsageFlagBits::eOneTimeSubmit)),
+                       LLAMA_DEBUG_INFO, "vk::CommandBuffer::begin() failed!"))
+        return false;
+
+    // Record Command via Callback
+    commands(buffer[0].get());
+
+    // Stop Recording
+    if (!assert_vulkan(buffer[0]->end(),
+                       LLAMA_DEBUG_INFO, "vk::CommandBuffer::end() failed!"))
+        return false;
+
+
+    vk::UniqueFence fence;
     
+    // Create Fence
+    if (!assert_vulkan(m_logicalDevice->createFenceUnique(vk::FenceCreateInfo()), fence,
+                       LLAMA_DEBUG_INFO, "vk::Device::createFenceUnique() failed!"))
+        return false;
+
+    vk::SubmitInfo submit_info(0, nullptr, nullptr, // Wait semaphores
+                               1, &(buffer[0].get()), // Command Buffers
+                               0, nullptr /* Signal semaphores */);
+
+    // Submit Command Buffer
+    if (!assert_vulkan(queue.queueHandle.submit(1, &submit_info, fence.get()),
+                       LLAMA_DEBUG_INFO, "vk::Queue::submit() failed!"))
+        return false;
+
+    // Wait form completion
+    if (!assert_vulkan(m_logicalDevice->waitForFences(1, &(fence.get()), VK_TRUE, UINT64_MAX),
+                       LLAMA_DEBUG_INFO, "vk::Device::waitForFences() failed!"))
+        return false;
+
+    return true;
 }
 
 bool llama::GraphicsDevice_IVulkan::createVulkanInstance(const std::vector<std::string_view>& instanceLayers,
@@ -246,8 +299,8 @@ bool llama::GraphicsDevice_IVulkan::createVulkanLogicalDevice(std::initializer_l
 
     QueueManager manager(m_physicalDevice, m_vulkanInstance.get());
 
-    manager.requestQueue(vk::QueueFlagBits::eGraphics, true, &m_graphicsQueue);
-    manager.requestQueue(vk::QueueFlagBits::eTransfer, false, &m_transferQueue);
+    manager.requestQueue(vk::QueueFlagBits::eGraphics, true, &m_graphicsQueue, 1.0f);
+    manager.requestQueue(vk::QueueFlagBits::eTransfer, false, &m_transferQueue, 1.0f);
 
     auto queueInfo = manager.getQueueInformation();
 
@@ -336,7 +389,7 @@ bool llama::GraphicsDevice_IVulkan::QueueManager::requestQueue(vk::QueueFlags fl
     for (uint32_t i = 0; i < m_properties.size(); ++i)
     {
         // If all Queues are already in use skip family
-        if (m_queueCounts[i].first >= m_properties[i].queueCount)
+        if (m_queueCounts[i].second.size() >= m_properties[i].queueCount)
             continue;
 
         // If family doesnt have all flags, skip
@@ -355,8 +408,7 @@ bool llama::GraphicsDevice_IVulkan::QueueManager::requestQueue(vk::QueueFlags fl
 
     if (bestScore.first != 0xffffffff)
     {
-        future->queueFamily = bestScore.first;
-        m_outputQueues.push_back(std::make_pair(future, m_queueCounts[bestScore.first].first++));
+        m_outputQueues.push_back(std::make_pair(future, std::make_pair(bestScore.first, static_cast<uint32_t>(m_queueCounts[bestScore.first].second.size()))));
         m_queueCounts[bestScore.first].second.push_back(priority);
         return true;
     }
@@ -369,14 +421,32 @@ std::vector<vk::DeviceQueueCreateInfo> llama::GraphicsDevice_IVulkan::QueueManag
     std::vector<vk::DeviceQueueCreateInfo> result;
 
     for (uint32_t i = 0; i < m_queueCounts.size(); ++i)
-        if (m_queueCounts[i].first > 0)
-            result.push_back(vk::DeviceQueueCreateInfo({ }, i, m_queueCounts[i].first, m_queueCounts[i].second.data()));
+        if (m_queueCounts[i].second.size() > 0)
+            result.push_back(vk::DeviceQueueCreateInfo({ }, i, static_cast<uint32_t>(m_queueCounts[i].second.size()), m_queueCounts[i].second.data()));
+            
 
     return std::move(result);
 }
 
 void llama::GraphicsDevice_IVulkan::QueueManager::writeQueues(vk::Device device)
 {
+    for (uint32_t i = 0; i < m_queueCounts.size(); ++i)
+        if (m_queueCounts[i].second.size() > 0)
+        {
+            vk::UniqueCommandPool pool;
+
+            assert_vulkan(device.createCommandPoolUnique(vk::CommandPoolCreateInfo(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, // flags
+                                                                                   i /* queue family */)),
+                          pool, LLAMA_DEBUG_INFO, "vk::Device::createCommandPoolUnique() failed!");
+
+            m_queueCounts[i].first = std::make_shared<VulkanQueueFamily>(i, std::move(pool));
+        }
+            
+
     for (const auto& a : m_outputQueues)
-        a.first->queueHandle = device.getQueue(a.first->queueFamily, a.second);
+    {
+        a.first->queueHandle = device.getQueue(a.second.first, a.second.second);
+        a.first->queueFamily = m_queueCounts[a.second.first].first;
+    }
+        
 }

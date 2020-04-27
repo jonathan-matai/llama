@@ -11,6 +11,9 @@ llama::WindowContext_IVulkan::WindowContext_IVulkan(Window window, GraphicsDevic
     
     createVulkanSurface();
     createSwapchain();
+
+    m_depthImage = std::make_unique<DepthImage_Vulkan>(m_device, m_swapchainWidth, m_swapchainHeight, vk::SampleCountFlagBits::e1);
+    m_colorImage = std::make_unique<ColorImage_Vulkan>(m_device, m_swapchainWidth, m_swapchainHeight, m_swapchainFormat, vk::SampleCountFlagBits::e2);
 }
 
 llama::WindowContext_IVulkan::~WindowContext_IVulkan()
@@ -71,6 +74,29 @@ bool llama::WindowContext_IVulkan::createSwapchain()
 
     if (!assert_vulkan(m_device->getDevice().createSwapchainKHRUnique(swapchain_ci), m_swapchain, LLAMA_DEBUG_INFO, "vk::Device::createSwapchainKHRUnique() failed! Cannot create WindowContext!"))
         return false;
+
+    m_swapchainWidth = caps.currentExtent.width;
+    m_swapchainHeight = caps.currentExtent.height;
+    m_swapchainFormat = format.format;
+
+    if (!assert_vulkan(m_device->getDevice().getSwapchainImagesKHR(m_swapchain.get()), m_swapchainImages, LLAMA_DEBUG_INFO, "vk::Device::getSwapchainImagesKHR() failed!"))
+        return false;
+
+    m_swapchainImageViews.resize(m_swapchainImages.size());
+
+    for (size_t i = 0; i < m_swapchainImages.size(); ++i)
+    {
+        if (!assert_vulkan(m_device->getDevice().createImageViewUnique(vk::ImageViewCreateInfo({}, // Flags
+                                                                                               m_swapchainImages[i], // Image
+                                                                                               vk::ImageViewType::e2D, // Type
+                                                                                               format.format, // Format
+                                                                                               vk::ComponentMapping(),
+                                                                                               vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor,
+                                                                                                                         0, 1, // Mip Level and Count
+                                                                                                                         0, 1 /* Base Array Layer and count */))), 
+                           m_swapchainImageViews[i], LLAMA_DEBUG_INFO, "vk::Device::getSwapchainImagesKHR() failed!"))
+            return false;
+    }
 
     return false;
 }

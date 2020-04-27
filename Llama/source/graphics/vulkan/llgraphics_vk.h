@@ -4,7 +4,6 @@
 
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#include <vulkan/vulkan.hpp>
 #include <vk_mem_alloc.hpp>
 
 namespace llama
@@ -65,7 +64,7 @@ namespace llama
             output = std::move(result.value);
             return true;
         }
-         
+
         return false;
     }
 
@@ -78,10 +77,22 @@ namespace llama
         return false;
     }
 
+    struct VulkanQueueFamily
+    {
+        uint32_t m_queueFamily;
+        vk::UniqueCommandPool m_commandPool;
+        std::mutex m_commandPoolMutex;
+
+        VulkanQueueFamily(uint32_t queueFamily, vk::UniqueCommandPool&& commandPool) :
+            m_queueFamily(queueFamily),
+            m_commandPool(std::move(commandPool))
+        { }
+    };
+
     struct VulkanQueue
     {
         vk::Queue queueHandle;
-        uint32_t queueFamily;
+        std::shared_ptr<VulkanQueueFamily> queueFamily;
     };
 
     class GraphicsDevice_IVulkan : public GraphicsDevice_T
@@ -92,22 +103,14 @@ namespace llama
 
         ~GraphicsDevice_IVulkan() override;
 
-        bool createVulkanInstance(const std::vector<std::string_view>& instanceLayers,
-                                  const std::vector<std::string_view>& instanceExtensions);
+        bool executeOnDevice(std::function<void(vk::CommandBuffer)> commands, VulkanQueue queue);
 
-        bool createVulkanDebugUtilsMessenger();
-
-        bool createVulkanPhysicalDevice();
-
-        bool createVulkanLogicalDevice(std::initializer_list<std::string_view> deviceLayers,
-                                       std::initializer_list<std::string_view> deviceExtensions);
-
-        bool createMemoryAllocator();
-
-        inline vk::Instance getInstance() const { return m_vulkanInstance.get(); }
-        inline vk::Device getDevice() const { return m_logicalDevice.get(); }
-        inline vk::PhysicalDevice getPhysicalDevice() const { return m_physicalDevice; }
-        inline vma::Allocator getAllocator() const { return m_memoryAllocator; }
+        inline vk::Instance         getInstance() const         { return m_vulkanInstance.get(); }
+        inline vk::Device           getDevice() const           { return m_logicalDevice.get(); }
+        inline vk::PhysicalDevice   getPhysicalDevice() const   { return m_physicalDevice; }
+        inline vma::Allocator       getAllocator() const        { return m_memoryAllocator; }
+        inline VulkanQueue          getTransferQueue() const    { return m_transferQueue; }
+        inline VulkanQueue          getGraphicsQueue() const    { return m_graphicsQueue; }
 
     private:
 
@@ -128,9 +131,21 @@ namespace llama
             vk::Instance m_vulkanInstance;
             vk::PhysicalDevice m_phyiscalDevice;
             std::vector<vk::QueueFamilyProperties> m_properties;
-            std::vector<std::pair<uint32_t, std::vector<float>>> m_queueCounts;
-            std::vector<std::pair<VulkanQueue*, uint32_t>> m_outputQueues;
+            mutable std::vector<std::pair<std::shared_ptr<VulkanQueueFamily>, std::vector<float>>> m_queueCounts;
+            std::vector<std::pair<VulkanQueue*, std::pair<uint32_t, uint32_t>>> m_outputQueues;
         };
+
+        bool createVulkanInstance(const std::vector<std::string_view>& instanceLayers,
+                                  const std::vector<std::string_view>& instanceExtensions);
+
+        bool createVulkanDebugUtilsMessenger();
+
+        bool createVulkanPhysicalDevice();
+
+        bool createVulkanLogicalDevice(std::initializer_list<std::string_view> deviceLayers,
+                                       std::initializer_list<std::string_view> deviceExtensions);
+
+        bool createMemoryAllocator();
 
         static VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                       VkDebugUtilsMessageTypeFlagsEXT messageTypes,
