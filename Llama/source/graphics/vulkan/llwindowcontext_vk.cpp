@@ -12,8 +12,11 @@ llama::WindowContext_IVulkan::WindowContext_IVulkan(Window window, GraphicsDevic
     createVulkanSurface();
     createSwapchain();
 
-    m_depthImage = std::make_unique<DepthImage_Vulkan>(m_device, m_swapchainWidth, m_swapchainHeight, vk::SampleCountFlagBits::e1);
-    m_colorImage = std::make_unique<ColorImage_Vulkan>(m_device, m_swapchainWidth, m_swapchainHeight, m_swapchainFormat, vk::SampleCountFlagBits::e2);
+    m_depthImage = std::make_unique<DepthImage_Vulkan>(m_device, m_swapchainWidth, m_swapchainHeight, vk::SampleCountFlagBits::e4);
+    m_colorImage = std::make_unique<ColorImage_Vulkan>(m_device, m_swapchainWidth, m_swapchainHeight, m_swapchainFormat, vk::SampleCountFlagBits::e4);
+
+    createRenderPass();
+    createFramebuffers();
 }
 
 llama::WindowContext_IVulkan::~WindowContext_IVulkan()
@@ -79,15 +82,17 @@ bool llama::WindowContext_IVulkan::createSwapchain()
     m_swapchainHeight = caps.currentExtent.height;
     m_swapchainFormat = format.format;
 
-    if (!assert_vulkan(m_device->getDevice().getSwapchainImagesKHR(m_swapchain.get()), m_swapchainImages, LLAMA_DEBUG_INFO, "vk::Device::getSwapchainImagesKHR() failed!"))
+    std::vector<vk::Image> swapchainImages;
+
+    if (!assert_vulkan(m_device->getDevice().getSwapchainImagesKHR(m_swapchain.get()), swapchainImages, LLAMA_DEBUG_INFO, "vk::Device::getSwapchainImagesKHR() failed!"))
         return false;
 
-    m_swapchainImageViews.resize(m_swapchainImages.size());
+    m_swapchainImageViews.resize(swapchainImages.size());
 
-    for (size_t i = 0; i < m_swapchainImages.size(); ++i)
+    for (size_t i = 0; i < swapchainImages.size(); ++i)
     {
         if (!assert_vulkan(m_device->getDevice().createImageViewUnique(vk::ImageViewCreateInfo({}, // Flags
-                                                                                               m_swapchainImages[i], // Image
+                                                                                               swapchainImages[i], // Image
                                                                                                vk::ImageViewType::e2D, // Type
                                                                                                format.format, // Format
                                                                                                vk::ComponentMapping(),
@@ -98,7 +103,87 @@ bool llama::WindowContext_IVulkan::createSwapchain()
             return false;
     }
 
-    return false;
+    return true;
+}
+
+bool llama::WindowContext_IVulkan::createRenderPass()
+{
+    std::array<vk::AttachmentDescription, 3> attachments
+    {
+        vk::AttachmentDescription({},
+                                  m_swapchainFormat,
+                                  vk::SampleCountFlagBits::e1,
+                                  vk::AttachmentLoadOp::eDontCare,
+                                  vk::AttachmentStoreOp::eStore,
+                                  vk::AttachmentLoadOp::eDontCare,
+                                  vk::AttachmentStoreOp::eDontCare,
+                                  vk::ImageLayout::eUndefined,
+                                  vk::ImageLayout::ePresentSrcKHR),
+        vk::AttachmentDescription({},
+                                  m_colorImage->getFormat(),
+                                  m_colorImage->getMsaa(),
+                                  vk::AttachmentLoadOp::eClear,
+                                  vk::AttachmentStoreOp::eStore,
+                                  vk::AttachmentLoadOp::eDontCare,
+                                  vk::AttachmentStoreOp::eDontCare,
+                                  vk::ImageLayout::eUndefined,
+                                  vk::ImageLayout::eColorAttachmentOptimal),
+        vk::AttachmentDescription({},
+                                  m_depthImage->getFormat(),
+                                  m_depthImage->getMsaa(),
+                                  vk::AttachmentLoadOp::eClear,
+                                  vk::AttachmentStoreOp::eDontCare,
+                                  vk::AttachmentLoadOp::eDontCare,
+                                  vk::AttachmentStoreOp::eDontCare,
+                                  vk::ImageLayout::eUndefined,
+                                  vk::ImageLayout::eDepthStencilAttachmentOptimal)
+    };
+
+    vk::AttachmentReference swapchainAttachment(0, vk::ImageLayout::eColorAttachmentOptimal);
+    vk::AttachmentReference colorAttachment(1, vk::ImageLayout::eColorAttachmentOptimal);
+    vk::AttachmentReference depthAttachment(2, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+
+    vk::SubpassDescription subpass({},
+                                   vk::PipelineBindPoint::eGraphics,
+                                   0, nullptr, // Input Attachments
+                                   1, &colorAttachment, &swapchainAttachment, &depthAttachment, // Color and depth attachments
+                                   0, nullptr /* Resolve Attachments */);
+
+    vk::SubpassDependency dependany(VK_SUBPASS_EXTERNAL, // Dependancy between External subpass and ...
+                                    0, // ... first subpass
+                                    vk::PipelineStageFlagBits::eColorAttachmentOutput, // Color Attachment Output must finish
+                                    vk::PipelineStageFlagBits::eColorAttachmentOutput, // Color Attachment Output must wait for layout transformation
+                                    {}, // Source Access Mask
+                                    vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite, // Destination Access Mask
+                                    {} /* Dependancy Flag */);
+
+    if (!assert_vulkan(m_device->getDevice().createRenderPassUnique(vk::RenderPassCreateInfo({},
+                                                                                             static_cast<uint32_t>(attachments.size()), attachments.data(),
+                                                                                             1, &subpass,
+                                                                                             1, &dependany)),
+                       m_renderPass, LLAMA_DEBUG_INFO, "vk::Device::createRenderPassUnique() failed!"))
+        return false;
+
+    return true;
+}
+
+bool llama::WindowContext_IVulkan::createFramebuffers()
+{
+    m_frameBuffers.resize(m_swapchainImageViews.size());
+
+    for (size_t i = 0; i < m_swapchainImageViews.size(); ++i)
+    {
+        std::array<vk::ImageView, 3> imageViews = { m_swapchainImageViews[i].get(), m_colorImage->getImageView(), m_depthImage->getImageView() };
+
+        if (!assert_vulkan(m_device->getDevice().createFramebufferUnique(vk::FramebufferCreateInfo({}, // Flags
+                                                                                                   m_renderPass.get(), // Render Pass
+                                                                                                   static_cast<uint32_t>(imageViews.size()), imageViews.data(), // Attachments
+                                                                                                   m_swapchainWidth, m_swapchainHeight, 1 /* width, height, layers*/)),
+                           m_frameBuffers[i], LLAMA_DEBUG_INFO, "vk::Device::createFrameBufferUnique() failed!"))
+            return false;
+    }
+
+    return true;
 }
 
 vk::SurfaceFormatKHR llama::WindowContext_IVulkan::pickFormat()

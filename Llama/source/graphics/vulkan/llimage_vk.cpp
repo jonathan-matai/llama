@@ -6,11 +6,13 @@ llama::Image_Vulkan::Image_Vulkan(std::shared_ptr<GraphicsDevice_IVulkan> device
                                   uint32_t width, 
                                   uint32_t height, 
                                   vk::Format format, 
-                                  vk::ImageUsageFlags usage, 
+                                  vk::ImageUsageFlags usage,
+                                  vk::ImageAspectFlags aspect,
                                   vma::MemoryUsage memoryType,
                                   vk::SampleCountFlagBits msaa) :
     m_device(device),
-    m_format(format)
+    m_format(format),
+    m_msaa(msaa)
 {
 
     assert_vulkan(device->getAllocator().createImage(vk::ImageCreateInfo({}, // Flags
@@ -27,10 +29,20 @@ llama::Image_Vulkan::Image_Vulkan(std::shared_ptr<GraphicsDevice_IVulkan> device
                                                                                memoryType)), 
                   m_image, LLAMA_DEBUG_INFO, "vma::Allocator::createImage() failed!");
                                                                             
+    assert_vulkan(m_device->getDevice().createImageView(vk::ImageViewCreateInfo({}, // Flags
+                                                                                m_image.first, // Image
+                                                                                vk::ImageViewType::e2D, // View Type
+                                                                                format, // Format
+                                                                                vk::ComponentMapping(),
+                                                                                vk::ImageSubresourceRange(aspect,
+                                                                                                          0, 1,  // Mip Level and Level Count
+                                                                                                          0, 1 /* Array Layer and Layer Count */))), 
+                  m_imageView, LLAMA_DEBUG_INFO, "vk::Device::createImageViewUnique() failed!");
 }
 
 llama::Image_Vulkan::~Image_Vulkan()
 {
+    m_device->getDevice().destroyImageView(m_imageView);
     m_device->getAllocator().destroyImage(m_image.first, m_image.second);
 }
 
@@ -57,8 +69,10 @@ llama::DepthImage_Vulkan::DepthImage_Vulkan(std::shared_ptr<GraphicsDevice_IVulk
                             { vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint }, 
                             vk::ImageTiling::eOptimal, 
                             vk::FormatFeatureFlagBits::eDepthStencilAttachment), 
-                 vk::ImageUsageFlagBits::eDepthStencilAttachment, 
-                 vma::MemoryUsage::eGpuOnly)
+                 vk::ImageUsageFlagBits::eDepthStencilAttachment,
+                 vk::ImageAspectFlagBits::eDepth,
+                 vma::MemoryUsage::eGpuOnly,
+                 msaaLevel)
 {
 
     device->executeOnDevice([this](vk::CommandBuffer buffer)
@@ -92,7 +106,9 @@ llama::ColorImage_Vulkan::ColorImage_Vulkan(std::shared_ptr<GraphicsDevice_IVulk
                  height,
                  format,
                  vk::ImageUsageFlagBits::eColorAttachment,
-                 vma::MemoryUsage::eGpuOnly)
+                 vk::ImageAspectFlagBits::eColor,
+                 vma::MemoryUsage::eGpuOnly,
+                 msaaLevel)
 {
 
     device->executeOnDevice([this](vk::CommandBuffer buffer)

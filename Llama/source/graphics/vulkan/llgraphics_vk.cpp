@@ -296,6 +296,7 @@ bool llama::GraphicsDevice_IVulkan::createVulkanLogicalDevice(std::initializer_l
     create_device:
     
     vk::PhysicalDeviceFeatures features = { };
+    features.wideLines = VK_TRUE;
 
     QueueManager manager(m_physicalDevice, m_vulkanInstance.get());
 

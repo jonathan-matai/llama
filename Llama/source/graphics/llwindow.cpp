@@ -18,6 +18,10 @@ namespace llama
 
         static void debugCallback(int error, const char* description);
 
+        bool shouldClose() override;
+
+        void tick() override;
+
         GLFWwindow* getGLFWWindowHandle() const override;
 
         GLFWwindow* m_window;
@@ -44,8 +48,8 @@ llama::Window_I::Window_I(const WindowDesc& description)
 
 llama::Window_I::~Window_I()
 {
-    while (!glfwWindowShouldClose(m_window))
-        glfwPollEvents();
+    //while (!glfwWindowShouldClose(m_window))
+    //    glfwPollEvents();
 
     glfwDestroyWindow(m_window);
     glfwTerminate();
@@ -54,6 +58,16 @@ llama::Window_I::~Window_I()
 void llama::Window_I::debugCallback(int error, const char* description)
 {
     logfile()->print(Colors::RED, "GLFW Error %x: %s", error, description);
+}
+
+bool llama::Window_I::shouldClose()
+{
+    return glfwWindowShouldClose(m_window) != 0;
+}
+
+void llama::Window_I::tick()
+{
+    glfwPollEvents();
 }
 
 GLFWwindow* llama::Window_I::getGLFWWindowHandle() const

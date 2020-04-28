@@ -35,6 +35,10 @@ namespace llama
 
         virtual ~Window_T() = default;
 
+        virtual bool shouldClose() = 0;
+
+        virtual void tick() = 0;
+
         virtual GLFWwindow* getGLFWWindowHandle() const = 0;
     };
 
