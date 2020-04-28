@@ -29,27 +29,23 @@ workspace "Llama"
     
         systemversion "latest"
 
-        defines { "LLAMA_OS_WINDOWS", "LLAMA_OS=\"Windows\"", "WINVER=0x0A00", "_WIN32_WINNT=0x0A00", "_CRT_SECURE_NO_WARNINGS" }
+        defines { "_WIN32", "WINVER=0x0A00", "_WIN32_WINNT=0x0A00" }
 
     filter "system:linux"
 
-        defines { "LLAMA_OS_LINUX", "LLAMA_OS=\"Linux\"" }
-
         buildoptions { "-march=native" }
-
-        linkoptions { "-pthread", "-lstdc++fs", "-Wl,--no-as-needed", "-ldl" }
 
     filter "configurations:Debug"
 
         symbols "On"
         
-        defines { "LLAMA_DEBUG", "DEBUG", "LLAMA_CONFIG=\"Debug\"" }
+        defines { "DEBUG" }
 
     filter "configurations:Release"
 
         optimize "On"
 
-        defines { "LLAMA_RELEASE", "NDEBUG", "LLAMA_CONFIG=\"Release\"" }
+        defines { "NDEBUG" }
 
     group "vendor"
 
@@ -62,8 +58,8 @@ workspace "Llama"
         kind "SharedLib"
         location "Llama"
 
-        pchheader "llcore.h"
-        pchsource "%{prj.name}/source/llcore.cpp"
+        pchheader "llpch.h"
+        pchsource "%{prj.name}/source/llpch.cpp"
 
         includedirs
         {
@@ -88,6 +84,27 @@ workspace "Llama"
         }
 
         defines { "LLAMA_BUILD" }
+
+        filter "system:windows"
+
+            defines { "LLAMA_OS_WINDOWS", "LLAMA_OS=\"Windows\"", "WINVER=0x0A00", "_WIN32_WINNT=0x0A00", "_CRT_SECURE_NO_WARNINGS" }
+
+        filter "system:linux"
+
+            defines { "LLAMA_OS_LINUX", "LLAMA_OS=\"Linux\"" }
+
+            buildoptions { "-march=native" }
+
+            linkoptions { "-pthread", "-lstdc++fs", "-Wl,--no-as-needed", "-ldl" }
+
+        filter "configurations:Debug"
+        
+            defines { "LLAMA_DEBUG", "LLAMA_CONFIG=\"Debug\"" }
+
+        filter "configurations:Release"
+
+            defines { "LLAMA_RELEASE", "LLAMA_CONFIG=\"Release\"" }
+
 
     project "Common_1"
 
@@ -133,8 +150,6 @@ workspace "Llama"
         {
             "Llama",
             "Common_1"
-            --,
-            --"stdc++fs"
         }
 
     project "Server_1"
@@ -158,6 +173,4 @@ workspace "Llama"
         {
             "Llama",
             "Common_1"
-            --,
-            --"stdc++fs"
         }

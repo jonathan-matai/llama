@@ -7,14 +7,12 @@
  Llama Game Library
 
  > llcore.h
- The precompiled header of the Llama Game Library
+ Basic definitions and includes
 */
 
+#pragma once
 
-#ifndef LLCORE_H
-#define LLCORE_H
-
-#ifdef LLAMA_OS_WINDOWS
+#if defined(LLAMA_OS_WINDOWS) || defined(_WIN32) 
 
     #ifdef LLAMA_BUILD
         #define LLAMA_API __declspec(dllexport)
@@ -24,21 +22,6 @@
 
 #else
     #define LLAMA_API
-#endif
-
-#ifndef LLAMA_OS
-    #define LLAMA_OS "Unknown"
-#endif
-
-#ifndef LLAMA_CONFIG
-    #define LLAMA_CONFIG "Unknown"
-#endif
-
-
-#ifdef LLAMA_DEBUG
-    #define LLAMA_DEBUG_ONLY(operation) operation
-#else
-    #define LLAMA_DEBUG_ONLY(operation)
 #endif
 
 // std::function
@@ -89,5 +72,3 @@ namespace llama
 
     constexpr size_t bit(uint8_t bit) { return size_t(1) << bit; }
 }
-
-#endif

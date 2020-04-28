@@ -5,6 +5,9 @@
 # Ingore temporary files by Visual Studio
 /.vs
 
+# Ignore configuration files by VS Code
+/.vscode
+
 # Ignore build and binary files
 /binaries
 /build

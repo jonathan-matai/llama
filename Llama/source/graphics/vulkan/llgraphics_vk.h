@@ -2,9 +2,7 @@
 
 #include "graphics/llgraphics.h"
 
-#define VULKAN_HPP_NO_EXCEPTIONS
-#define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
-#include <vk_mem_alloc.hpp>
+
 
 namespace llama
 {
