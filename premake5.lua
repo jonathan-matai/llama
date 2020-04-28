@@ -85,6 +85,10 @@ workspace "Llama"
 
         defines { "LLAMA_BUILD" }
 
+        filter "files:Llama/source/llcore.cpp"
+
+            flags { "NoPCH" }
+
         filter "system:windows"
 
             defines { "LLAMA_OS_WINDOWS", "LLAMA_OS=\"Windows\"", "WINVER=0x0A00", "_WIN32_WINNT=0x0A00", "_CRT_SECURE_NO_WARNINGS" }
@@ -104,6 +108,8 @@ workspace "Llama"
         filter "configurations:Release"
 
             defines { "LLAMA_RELEASE", "LLAMA_CONFIG=\"Release\"" }
+
+        
 
 
     project "Common_1"

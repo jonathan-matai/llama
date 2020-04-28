@@ -18,6 +18,11 @@
     #define LLAMA_DEBUG_ONLY(operation)
 #endif
 
+#ifdef LLAMA_OS_WINDOWS
+    // winsock2.h has to be included before Windows.h (included by vk_mem_alloc.hpp) to not produce any errors
+    #include <winsock2.h>
+#endif
+
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VMA_STATIC_VULKAN_FUNCTIONS 0

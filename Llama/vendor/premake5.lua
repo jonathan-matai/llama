@@ -3,9 +3,6 @@ project "glfw"
     location "glfw"
     kind "StaticLib"
 
-	buildoptions "-fPIC"
-
-
     files{
         "glfw/include/GLFW/glfw3.h",
 		"glfw/include/GLFW/glfw3native.h",
@@ -17,10 +14,6 @@ project "glfw"
 		"glfw/src/vulkan.c",
 		"glfw/src/window.c"
     }
-
-    --defines {
-        --"_GLFW_VULKAN_STATIC"
-    --}
 
     filter "system:windows"
 
@@ -42,6 +35,8 @@ project "glfw"
         }
 
     filter "system:linux"
+
+		buildoptions "-fPIC"
 
         files {
             "glfw/src/x11_init.c",
