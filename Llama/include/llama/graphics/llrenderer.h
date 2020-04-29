@@ -12,11 +12,13 @@
 
 #pragma once
 
-#include "llwindowcontext.h"
-#include "llshader.h"
+#include "llgraphics.h"
+#include "llwindow.h"
 
 namespace llama
 {
+    typedef std::shared_ptr<class Shader_T> Shader;
+
     class Renderer_T
     {
     public:
@@ -25,9 +27,11 @@ namespace llama
 
         virtual void tick() = 0;
 
+        virtual void setShader(Shader shader) = 0;
+
     };
 
     typedef std::shared_ptr<Renderer_T> Renderer;
 
-    LLAMA_API Renderer createRenderer(WindowContext context, Shader shader);
+    LLAMA_API Renderer createRenderer(GraphicsDevice device, Window context);
 }

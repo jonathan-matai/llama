@@ -4,9 +4,10 @@
 #include <GLFW/glfw3.h>
 #include "math/llmath.h"
 
-llama::WindowContext_IVulkan::WindowContext_IVulkan(Window window, GraphicsDevice device) :
+llama::WindowContext_IVulkan::WindowContext_IVulkan(Window window, std::shared_ptr<GraphicsDevice_IVulkan> device) :
     m_window(window),
-    m_device(std::static_pointer_cast<GraphicsDevice_IVulkan>(device))
+    m_device(device),
+    m_swapchainFormat(vk::Format::eUndefined)
 {
     
     createVulkanSurface();
@@ -23,7 +24,23 @@ llama::WindowContext_IVulkan::~WindowContext_IVulkan()
 {
 }
 
-bool llama::WindowContext_IVulkan::createVulkanSurface()
+void llama::WindowContext_IVulkan::recreate()
+{
+    m_frameBuffers.clear();
+    m_colorImage.reset();
+    m_depthImage.reset();
+    m_swapchainImageViews.clear();
+    m_swapchain.reset();
+
+    createSwapchain();
+
+    m_depthImage = std::make_unique<DepthImage_Vulkan>(m_device, m_swapchainWidth, m_swapchainHeight, vk::SampleCountFlagBits::e4);
+    m_colorImage = std::make_unique<ColorImage_Vulkan>(m_device, m_swapchainWidth, m_swapchainHeight, m_swapchainFormat, vk::SampleCountFlagBits::e4);
+
+    createFramebuffers();
+}
+
+void llama::WindowContext_IVulkan::createVulkanSurface()
 {
     VkSurfaceKHR surface;
     VkResult r = glfwCreateWindowSurface(m_device->getInstance(), m_window->getGLFWWindowHandle(), nullptr, &surface);
@@ -31,32 +48,30 @@ bool llama::WindowContext_IVulkan::createVulkanSurface()
     if (r != VK_SUCCESS)
     {
         logfile()->print(Colors::RED, LLAMA_DEBUG_INFO, "glfwCreateWindowSurface() failed! Cannot create WindowContext! (%s)", vkResultToString(static_cast<vk::Result>(r)));
-        return false;
+        return;
     }
 
     m_surface = vk::UniqueSurfaceKHR(static_cast<vk::SurfaceKHR>(surface), vk::ObjectDestroy(m_device->getInstance(), nullptr, VULKAN_HPP_DEFAULT_DISPATCHER));
-
-    return true;
 }
 
-bool llama::WindowContext_IVulkan::createSwapchain()
+void llama::WindowContext_IVulkan::createSwapchain()
 {
     vk::SurfaceCapabilitiesKHR caps;
 
-    if (!assert_vulkan(m_device->getPhysicalDevice().getSurfaceCapabilitiesKHR(m_surface.get()), caps, 
+    if (!assert_vulkan(m_device->getPhysicalDevice().getSurfaceCapabilitiesKHR(m_surface.get()), caps,
                        LLAMA_DEBUG_INFO, "vk::PhysicalDevice::getSurfaceCapabilitiesKHR() failed! Cannot create WindowContext"))
-        return false;
+        return;
 
     VkBool32 result;
 
     if (!assert_vulkan(m_device->getPhysicalDevice().getSurfaceSupportKHR(0, m_surface.get()), result, 
                        LLAMA_DEBUG_INFO, "vk::PhysicalDevice::getSurfaceSupportKHR() failed! Cannot create WindowContext!"))
-        return false;
+        return;
 
     if (result != VK_TRUE)
     {
         logfile()->print(Colors::RED, LLAMA_DEBUG_INFO, "Vulkan Window Surface created cannot be used for drawing!");
-        return false;
+        return;
     }
 
     auto format = pickFormat();
@@ -75,17 +90,18 @@ bool llama::WindowContext_IVulkan::createSwapchain()
                                             pickPresentMode(),                                  // Present Mode
                                             VK_TRUE                                             /* clipped */);
 
-    if (!assert_vulkan(m_device->getDevice().createSwapchainKHRUnique(swapchain_ci), m_swapchain, LLAMA_DEBUG_INFO, "vk::Device::createSwapchainKHRUnique() failed! Cannot create WindowContext!"))
-        return false;
+    if (!assert_vulkan(m_device->getDevice().createSwapchainKHRUnique(swapchain_ci), m_swapchain, 
+                       LLAMA_DEBUG_INFO, "vk::Device::createSwapchainKHRUnique() failed! Cannot create WindowContext!"))
+        return;
 
     m_swapchainWidth = caps.currentExtent.width;
     m_swapchainHeight = caps.currentExtent.height;
-    m_swapchainFormat = format.format;
 
     std::vector<vk::Image> swapchainImages;
 
-    if (!assert_vulkan(m_device->getDevice().getSwapchainImagesKHR(m_swapchain.get()), swapchainImages, LLAMA_DEBUG_INFO, "vk::Device::getSwapchainImagesKHR() failed!"))
-        return false;
+    if (!assert_vulkan(m_device->getDevice().getSwapchainImagesKHR(m_swapchain.get()), swapchainImages, 
+                       LLAMA_DEBUG_INFO, "vk::Device::getSwapchainImagesKHR() failed!"))
+        return;
 
     m_swapchainImageViews.resize(swapchainImages.size());
 
@@ -100,13 +116,16 @@ bool llama::WindowContext_IVulkan::createSwapchain()
                                                                                                                          0, 1, // Mip Level and Count
                                                                                                                          0, 1 /* Base Array Layer and count */))), 
                            m_swapchainImageViews[i], LLAMA_DEBUG_INFO, "vk::Device::getSwapchainImagesKHR() failed!"))
-            return false;
+            return;
     }
 
-    return true;
+    if (m_swapchainFormat != format.format && m_swapchainFormat != vk::Format::eUndefined)
+        logfile()->print(Colors::RED, "The Swapchain Format has changed! Restart Application to apply changes!");
+
+    m_swapchainFormat = format.format;
 }
 
-bool llama::WindowContext_IVulkan::createRenderPass()
+void llama::WindowContext_IVulkan::createRenderPass()
 {
     std::array<vk::AttachmentDescription, 3> attachments
     {
@@ -157,17 +176,14 @@ bool llama::WindowContext_IVulkan::createRenderPass()
                                     vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite, // Destination Access Mask
                                     {} /* Dependancy Flag */);
 
-    if (!assert_vulkan(m_device->getDevice().createRenderPassUnique(vk::RenderPassCreateInfo({},
-                                                                                             static_cast<uint32_t>(attachments.size()), attachments.data(),
-                                                                                             1, &subpass,
-                                                                                             1, &dependany)),
-                       m_renderPass, LLAMA_DEBUG_INFO, "vk::Device::createRenderPassUnique() failed!"))
-        return false;
-
-    return true;
+    assert_vulkan(m_device->getDevice().createRenderPassUnique(vk::RenderPassCreateInfo({},
+                                                                                        static_cast<uint32_t>(attachments.size()), attachments.data(),
+                                                                                        1, &subpass,
+                                                                                        1, &dependany)),
+                  m_renderPass, LLAMA_DEBUG_INFO, "vk::Device::createRenderPassUnique() failed!");
 }
 
-bool llama::WindowContext_IVulkan::createFramebuffers()
+void llama::WindowContext_IVulkan::createFramebuffers()
 {
     m_frameBuffers.resize(m_swapchainImageViews.size());
 
@@ -180,10 +196,8 @@ bool llama::WindowContext_IVulkan::createFramebuffers()
                                                                                                    static_cast<uint32_t>(imageViews.size()), imageViews.data(), // Attachments
                                                                                                    m_swapchainWidth, m_swapchainHeight, 1 /* width, height, layers*/)),
                            m_frameBuffers[i], LLAMA_DEBUG_INFO, "vk::Device::createFrameBufferUnique() failed!"))
-            return false;
+            return;
     }
-
-    return true;
 }
 
 vk::SurfaceFormatKHR llama::WindowContext_IVulkan::pickFormat()

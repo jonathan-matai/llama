@@ -1,7 +1,13 @@
 #pragma once
 
-#include "llwindowcontext_vk.h"
 #include "graphics/llshader.h"
+
+namespace llama
+{
+    class Shader_IVulkan;
+}
+
+#include "llrenderer_vk.h"
 
 namespace llama
 {
@@ -9,7 +15,7 @@ namespace llama
     {
     public:
 
-        Shader_IVulkan(std::shared_ptr<WindowContext_IVulkan> context, std::string_view vertexShaderSpv, std::string_view fragmentShaderSpv);
+        Shader_IVulkan(std::shared_ptr<Renderer_IVulkan> context, std::string_view vertexShaderSpv, std::string_view fragmentShaderSpv);
         ~Shader_IVulkan() { }
 
         vk::Pipeline getPipeline() const { return m_pipeline.get(); }

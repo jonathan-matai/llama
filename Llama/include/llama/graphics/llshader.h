@@ -12,7 +12,7 @@
 
 #pragma once
 
-#include "llwindowcontext.h"
+#include "llrenderer.h"
 
 namespace llama
 {
@@ -26,5 +26,5 @@ namespace llama
 
     typedef std::shared_ptr<Shader_T> Shader;
     
-    LLAMA_API Shader createShader(WindowContext context, std::string_view vertexShaderSpv, std::string_view fragmentShaderSpv);
+    LLAMA_API Shader createShader(Renderer renderer, std::string_view vertexShaderSpv, std::string_view fragmentShaderSpv);
 }

@@ -1,32 +1,33 @@
 #pragma once
 
-#include "graphics/llwindowcontext.h"
 #include "graphics/llwindow.h"
 
-
 #include "llimage_vk.h"
-#include "llgraphics_vk.h"
 
 namespace llama
 {
-    class WindowContext_IVulkan : public WindowContext_T
+    class WindowContext_IVulkan
     {
         friend class Renderer_IVulkan;
 
     public:
 
-        WindowContext_IVulkan(Window window, GraphicsDevice device);
-        ~WindowContext_IVulkan() override;
+        WindowContext_IVulkan(Window window, std::shared_ptr<GraphicsDevice_IVulkan> device);
+        ~WindowContext_IVulkan();
+
+        void recreate();
 
         vk::Device getDevice() const { return m_device->getDevice(); }
         vk::RenderPass getRenderPass() const { return m_renderPass.get(); }
+        Window getWindow() const { return m_window; }
+        std::shared_ptr<GraphicsDevice_IVulkan> getGraphicsDevie() const { return m_device; }
 
     private:
 
-        bool createVulkanSurface();
-        bool createSwapchain();
-        bool createRenderPass();
-        bool createFramebuffers();
+        void createVulkanSurface();
+        void createSwapchain();
+        void createRenderPass();
+        void createFramebuffers();
 
         vk::SurfaceFormatKHR pickFormat();
         vk::PresentModeKHR pickPresentMode();

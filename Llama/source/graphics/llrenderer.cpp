@@ -1,10 +1,11 @@
 #include "llpch.h"
 #include "graphics/llrenderer.h"
 
+#include "graphics/llshader.h"
+
 #include "vulkan/llrenderer_vk.h"
 
-llama::Renderer llama::createRenderer(WindowContext context, Shader shader)
+llama::Renderer llama::createRenderer(GraphicsDevice device, Window window)
 {
-    return std::make_shared<Renderer_IVulkan>(std::static_pointer_cast<WindowContext_IVulkan>(context), 
-                                              std::static_pointer_cast<Shader_IVulkan>(shader));
+    return std::make_shared<Renderer_IVulkan>(std::static_pointer_cast<GraphicsDevice_IVulkan>(device), window);
 }

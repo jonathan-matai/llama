@@ -1,6 +1,8 @@
 #pragma once
 
 #include "graphics/llrenderer.h"
+#include "llwindowcontext_vk.h"
+
 #include "llshader_vk.h"
 
 namespace llama
@@ -9,11 +11,21 @@ namespace llama
     {
     public:
 
-        Renderer_IVulkan(std::shared_ptr<WindowContext_IVulkan> context, std::shared_ptr<Shader_IVulkan> shader);
+        Renderer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, Window window);
         ~Renderer_IVulkan() override;
 
         void tick() override;
+
+        void setShader(Shader shader) override;
+
+        vk::Device getDevice() const { return m_context->getDevice(); }
+        vk::RenderPass getRenderPass() const { return m_context->getRenderPass(); }
+
     private:
+
+        void recordCommandBuffers();
+
+        std::shared_ptr<Shader_IVulkan> t_shader;
 
         struct SyncObjects
         {
@@ -26,6 +38,6 @@ namespace llama
         std::vector<vk::UniqueCommandBuffer> m_commandBuffers;
         uint32_t m_swapchainIndex;
 
-        std::shared_ptr<WindowContext_IVulkan> m_context;
+        std::unique_ptr<WindowContext_IVulkan> m_context;
     };
 }

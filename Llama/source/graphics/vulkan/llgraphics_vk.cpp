@@ -372,7 +372,7 @@ VkBool32 llama::GraphicsDevice_IVulkan::debugCallback(VkDebugUtilsMessageSeverit
 
     }
 
-    return VK_FALSE;
+    return VK_TRUE;
 }
 
 llama::GraphicsDevice_IVulkan::QueueManager::QueueManager(vk::PhysicalDevice physicalDevice, vk::Instance instance) :

@@ -3,12 +3,12 @@
 
 #include <fstream>
 
-llama::Shader_IVulkan::Shader_IVulkan(std::shared_ptr<WindowContext_IVulkan> context, std::string_view vertexShaderSpv, std::string_view fragmentShaderSpv)
+llama::Shader_IVulkan::Shader_IVulkan(std::shared_ptr<Renderer_IVulkan> renderer, std::string_view vertexShaderSpv, std::string_view fragmentShaderSpv)
 {
-    createLayout(context->getDevice());
+    createLayout(renderer->getDevice());
 
-    vk::UniqueShaderModule vertexModule = createShaderModule(context->getDevice(), vertexShaderSpv);
-    vk::UniqueShaderModule fragmentModule = createShaderModule(context->getDevice(), fragmentShaderSpv);
+    vk::UniqueShaderModule vertexModule = createShaderModule(renderer->getDevice(), vertexShaderSpv);
+    vk::UniqueShaderModule fragmentModule = createShaderModule(renderer->getDevice(), fragmentShaderSpv);
 
     std::array<vk::PipelineShaderStageCreateInfo, 2> shaderStages
     {
@@ -90,23 +90,23 @@ llama::Shader_IVulkan::Shader_IVulkan(std::shared_ptr<WindowContext_IVulkan> con
                                                        static_cast<uint32_t>(dynamicStates.size()),
                                                        dynamicStates.data());
 
-    assert_vulkan(context->getDevice().createGraphicsPipelineUnique({},
-                                                                    vk::GraphicsPipelineCreateInfo({}, // Flags
-                                                                                                   static_cast<uint32_t>(shaderStages.size()),
-                                                                                                   shaderStages.data(),
-                                                                                                   &vertexInput_ci,
-                                                                                                   &inputAssembly_ci,
-                                                                                                   nullptr,
-                                                                                                   &viewport_ci,
-                                                                                                   &rasterization_ci,
-                                                                                                   &multisample_ci,
-                                                                                                   &depthStencil_ci,
-                                                                                                   &colorBlend_ci,
-                                                                                                   &dynamicState_ci,
-                                                                                                   m_layout.get(),
-                                                                                                   context->getRenderPass(),
-                                                                                                   0, // Subpass
-                                                                                                   nullptr, 0 /* Base Pipeline */)),
+    assert_vulkan(renderer->getDevice().createGraphicsPipelineUnique({},
+                                                                     vk::GraphicsPipelineCreateInfo({}, // Flags
+                                                                                                    static_cast<uint32_t>(shaderStages.size()),
+                                                                                                    shaderStages.data(),
+                                                                                                    &vertexInput_ci,
+                                                                                                    &inputAssembly_ci,
+                                                                                                    nullptr,
+                                                                                                    &viewport_ci,
+                                                                                                    &rasterization_ci,
+                                                                                                    &multisample_ci,
+                                                                                                    &depthStencil_ci,
+                                                                                                    &colorBlend_ci,
+                                                                                                    &dynamicState_ci,
+                                                                                                    m_layout.get(),
+                                                                                                    renderer->getRenderPass(),
+                                                                                                    0, // Subpass
+                                                                                                    nullptr, 0 /* Base Pipeline */)),
                   m_pipeline, LLAMA_DEBUG_INFO, "vk::Device::createGraphicsPipelineUnique() failed!");
 }
 

@@ -26,6 +26,7 @@
 #define VULKAN_HPP_NO_EXCEPTIONS
 #define VULKAN_HPP_DISPATCH_LOADER_DYNAMIC 1
 #define VMA_STATIC_VULKAN_FUNCTIONS 0
+#define VULKAN_HPP_ASSERT(x)
 #include <vk_mem_alloc.hpp>
 
 #endif
