@@ -59,13 +59,17 @@ int main()
     bus->postEvent(llama::CloseApplicationEvent());
     */
 
-    llama::Window window = llama::createWindow(llama::WindowDesc());
+    llama::WindowDesc desc;
+    desc.width = 800;
+    desc.height = 800;
+
+    llama::Window window = llama::createWindow(desc);
 
     llama::GraphicsDevice device = llama::createGraphicsDevice();
 
     llama::Renderer renderer = llama::createRenderer(device, window);
 
-    llama::Shader shader = llama::createShader(renderer, "resources/shaders/triangle_static/triangle_static.vert.spv", "resources/shaders/triangle_static/triangle_static.frag.spv");
+    llama::Shader shader = llama::createShader(renderer, "resources/shaders/triangles/triangles.json");
 
     renderer->setShader(shader);
 

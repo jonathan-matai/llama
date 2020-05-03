@@ -67,7 +67,8 @@ workspace "Llama"
             "%{prj.name}/vendor/asio/asio/include",
             "$(VULKAN_SDK)/Include",
             "%{prj.name}/vendor/glfw/include",
-            "%{prj.name}/vendor/VulkanMemoryAllocators"
+            "%{prj.name}/vendor/VulkanMemoryAllocators",
+            "%{prj.name}/vendor/json"
         }
 
         files
@@ -75,7 +76,8 @@ workspace "Llama"
             "%{prj.name}/include/**.h",
             "%{prj.name}/include/**.inl",
             "%{prj.name}/source/**.cpp",
-            "%{prj.name}/source/**.h"
+            "%{prj.name}/source/**.h",
+            "%{prj.name}/vendor/json/json.cpp"
         }
 
         links
@@ -86,6 +88,10 @@ workspace "Llama"
         defines { "LLAMA_BUILD" }
 
         filter "files:Llama/source/llcore.cpp"
+
+            flags { "NoPCH" }
+
+            filter "files:Llama/vendor/**"
 
             flags { "NoPCH" }
 

@@ -103,12 +103,13 @@ namespace llama
 
         bool executeOnDevice(std::function<void(vk::CommandBuffer)> commands, VulkanQueue queue);
 
-        inline vk::Instance         getInstance() const         { return m_vulkanInstance.get(); }
-        inline vk::Device           getDevice() const           { return m_logicalDevice.get(); }
-        inline vk::PhysicalDevice   getPhysicalDevice() const   { return m_physicalDevice; }
-        inline vma::Allocator       getAllocator() const        { return m_memoryAllocator; }
-        inline VulkanQueue          getTransferQueue() const    { return m_transferQueue; }
-        inline VulkanQueue          getGraphicsQueue() const    { return m_graphicsQueue; }
+        inline vk::Instance         getInstance() const                 { return m_vulkanInstance.get(); }
+        inline vk::Device           getDevice() const                   { return m_logicalDevice.get(); }
+        inline vk::PhysicalDevice   getPhysicalDevice() const           { return m_physicalDevice; }
+        inline vma::Allocator       getAllocator() const                { return m_memoryAllocator; }
+        inline VulkanQueue          getTransferQueue() const            { return m_transferQueue; }
+        inline VulkanQueue          getGraphicsQueue() const            { return m_graphicsQueue; }
+        inline size_t               getConstantBufferAlignment() const  { return m_physcialDeviceProperties.limits.minUniformBufferOffsetAlignment; }
 
     private:
 
@@ -154,6 +155,7 @@ namespace llama
         vk::UniqueInstance m_vulkanInstance;
         vk::UniqueHandle<vk::DebugUtilsMessengerEXT, vk::DispatchLoaderDynamic> m_debugMessenger;
         vk::PhysicalDevice m_physicalDevice;
+        vk::PhysicalDeviceProperties m_physcialDeviceProperties;
         vk::UniqueDevice m_logicalDevice;
 
         VulkanQueue m_graphicsQueue;

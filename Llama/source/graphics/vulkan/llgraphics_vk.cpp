@@ -19,7 +19,7 @@ llama::GraphicsDevice_IVulkan::GraphicsDevice_IVulkan()
     for (uint32_t i = 0; i < glfwExtensionCount; ++i)
         extensions.push_back(glfwExtensions[i]);
 
-    createVulkanInstance({ "VK_LAYER_KHRONOS_validation" }, extensions);
+    createVulkanInstance({ "VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_monitor" }, extensions);
     createVulkanDebugUtilsMessenger();
     createVulkanPhysicalDevice();
     createVulkanLogicalDevice({ "VK_LAYER_KHRONOS_validation" }, { "VK_KHR_swapchain" });
@@ -235,6 +235,7 @@ bool llama::GraphicsDevice_IVulkan::createVulkanPhysicalDevice()
     }
 
     m_physicalDevice = *bestScore.first;
+    m_physcialDeviceProperties = m_physicalDevice.getProperties();
 
     logfile()->print(t, true);
     logfile()->print(Colors::ORANGE, "Selecting Device %s", m_physicalDevice.getProperties().deviceName);
@@ -297,6 +298,7 @@ bool llama::GraphicsDevice_IVulkan::createVulkanLogicalDevice(std::initializer_l
     
     vk::PhysicalDeviceFeatures features = { };
     features.wideLines = VK_TRUE;
+    features.fillModeNonSolid = VK_TRUE;
 
     QueueManager manager(m_physicalDevice, m_vulkanInstance.get());
 

@@ -14,6 +14,8 @@
 
 #include <immintrin.h>
 
+#include "llvector.h"
+
 #ifdef min
 #undef min
 #endif

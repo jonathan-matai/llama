@@ -12,11 +12,6 @@
 ## Error Handling
 - Throw and catch std::runtime_error objects
 
-## Graphics Engine
-- Handle Window Resizing
-- Create VertexBuffer and IndexBuffer class
-- Create ConstantBuffer class
-
 ### Shader Class
 - Implement JSON Reader
 - Read Arguments from JSON File

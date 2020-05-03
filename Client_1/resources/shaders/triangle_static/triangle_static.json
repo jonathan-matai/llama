@@ -1,0 +1,56 @@
+{
+    "modules" :
+    {
+        "vertex" : "triangle_static.vert.spv",
+        "fragment" : "triangle_static.frag.spv"
+    },
+
+    "source" :
+    {
+        "vertex" : "triangle_static.vert",
+        "fragment" : "triangle_static.frag"
+    },
+
+    "vertexBindings" :
+    [
+        {
+            "locations" :
+            [
+                {
+                    "type" : "float2",
+                    "offset" : 0
+                },
+                {
+                    "type" : "float3",
+                    "offset" : 16
+                }
+            ],
+            "size" : 32,
+            "type" : "vertex"
+        }
+    ],
+
+    "descriptorBindings" :
+    [
+        [
+            {
+                "type" : "constantBuffer",
+                "stage" : "vertex"
+            }
+        ]
+    ],
+
+    "vertexTopology" : "triangleList",
+
+    "polygonMode" : "fill",
+
+    "backfaceCulling" : false,
+
+    "smoothTextureLevel" : 0.0,
+
+    "lineWidth" : 1.0,
+
+    "depthTest" : true,
+
+    "blending" : false
+}
