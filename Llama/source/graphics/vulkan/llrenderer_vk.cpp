@@ -4,6 +4,8 @@
 #include "llshader_vk.h"
 #include "llconstantset_vk.h"
 
+#include "math/llmath.h"
+
 struct Vertex_T
 {
     float x, y;
@@ -86,6 +88,38 @@ llama::Renderer_IVulkan::Renderer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan
     t_constantBuffer = std::make_shared<ConstantBuffer_IVulkan>(device, sizeof(float), 1, getSwapchainSize());
 
     t_colors = 0.0f;
+
+
+    std::vector<float4> llamaVerticies
+    {
+        float4(-.15f, -.3f, 0.0f, 0.0f),
+        float4(0.15f, -.3f, 1.0f, 0.0f),
+        float4(0.15f, 0.3f, 1.0f, 1.0f),
+        float4(0.15f, 0.3f, 1.0f, 1.0f),
+        float4(-.15f, 0.3f, 0.0f, 1.0f),
+        float4(-.15f, -.3f, 0.0f, 0.0f),
+    };
+
+    struct Constants
+    {
+        float2 offset;
+        float3x3 rotation;
+
+        Constants(float2 o, float3x3 r) :
+            offset(o),
+            rotation(r)
+        { }
+    };
+
+    t_llamaVertex = createVertexBuffer(device, sizeof(float4) * llamaVerticies.size(), llamaVerticies.data());
+
+    t_llamaConstants = createConstantBuffer(device, sizeof(Constants), 4);
+    *static_cast<Constants*>(t_llamaConstants->at(0)) = Constants(float2(-.5, -.5), float3x3());
+    *static_cast<Constants*>(t_llamaConstants->at(1)) = Constants(float2(0.5, -.5), float3x3());
+    *static_cast<Constants*>(t_llamaConstants->at(2)) = Constants(float2(0.5, 0.5), float3x3());
+    *static_cast<Constants*>(t_llamaConstants->at(3)) = Constants(float2(-.5, 0.5), float3x3());
+
+    t_llamaImage = llama::createSampledImage(device, "resources/textures/llama.png");
 }
 
 llama::Renderer_IVulkan::~Renderer_IVulkan()
@@ -136,11 +170,13 @@ void llama::Renderer_IVulkan::tick()
                   LLAMA_DEBUG_INFO, "vk::Device::resetFences() has failed!");
 }
 
-void llama::Renderer_IVulkan::setShader(Shader shader)
+void llama::Renderer_IVulkan::setShader(Shader shader, Shader shader2)
 {
     t_shader = std::static_pointer_cast<Shader_IVulkan>(shader);
+    t_llamaShader = shader2;
 
     t_constantSet = createConstantSet(t_shader, 0, { t_constantBuffer });
+    t_llamaConstantSet = createConstantSet(t_llamaShader, 0, { t_llamaConstants, t_llamaImage });
 
     recordCommandBuffers();
 }
@@ -185,6 +221,23 @@ void llama::Renderer_IVulkan::recordCommandBuffers()
                                                 1, &std::static_pointer_cast<ConstantSet_IVulkan>(t_constantSet)->m_sets[i].get(), // Sets
                                                 0, nullptr /* Dynamic Offsets */);
         m_commandBuffers[i]->draw(12, 1, 0, 0);
+
+        m_commandBuffers[i]->bindVertexBuffers(0, { std::static_pointer_cast<VertexBuffer_IVulkan>(t_llamaVertex)->getBuffer() }, { 0 });
+        m_commandBuffers[i]->bindPipeline(vk::PipelineBindPoint::eGraphics, std::static_pointer_cast<Shader_IVulkan>(t_llamaShader)->getPipeline());
+
+        for (uint32_t j = 0; j < 4; ++j)
+        {
+            uint32_t offset = static_cast<uint32_t>(t_llamaConstants->offset(j));
+
+            m_commandBuffers[i]->bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                                    std::static_pointer_cast<Shader_IVulkan>(t_llamaShader)->getPipelineLayout(),
+                                                    0,
+                                                    1, &std::static_pointer_cast<ConstantSet_IVulkan>(t_llamaConstantSet)->m_sets[i].get(),
+                                                    1, &offset);
+
+            m_commandBuffers[i]->draw(6, 1, 0, 0);
+        }
+
 
         m_commandBuffers[i]->endRenderPass();
         m_commandBuffers[i]->end();

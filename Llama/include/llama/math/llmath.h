@@ -14,8 +14,6 @@
 
 #include <immintrin.h>
 
-#include "llvector.h"
-
 #ifdef min
 #undef min
 #endif
@@ -26,6 +24,9 @@
 
 namespace llama
 {
+    constexpr float PI = 3.141592741f;
+
+
     template <typename compare_type>
     inline compare_type min(compare_type a, compare_type b);
 
@@ -39,5 +40,8 @@ namespace llama
     inline uint8_t hammingWeight(uint64_t bitfield);
  
 }
+
+#include "llvector.h"
+#include "llmatrix.h"
 
 #include "llmath.inl"

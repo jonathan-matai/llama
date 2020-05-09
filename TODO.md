@@ -11,7 +11,3 @@
 
 ## Error Handling
 - Throw and catch std::runtime_error objects
-
-### Shader Class
-- Implement JSON Reader
-- Read Arguments from JSON File

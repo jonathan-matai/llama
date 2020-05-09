@@ -81,5 +81,5 @@ size_t llama::ConstantBuffer_IVulkan::offset(uint32_t element, uint32_t swapchai
 
 size_t llama::ConstantBuffer_IVulkan::size()
 {
-    return m_elementCount * m_alignedSize;
+    return m_alignedSize;
 }

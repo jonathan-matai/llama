@@ -11,6 +11,8 @@
 */
 
 /*
+    SSE Intrinsics Cheat Sheet
+
     Explanation of third parameter of the function _mm_dp_ps:
     0b[0][1][2][3][4][5][6][7]
 

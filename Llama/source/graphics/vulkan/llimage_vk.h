@@ -1,7 +1,8 @@
 #pragma once
 
-#include "llgraphics_vk.h"
 
+#include "llgraphics_vk.h"
+#include "graphics/llimage.h"
 
 namespace llama
 {
@@ -17,6 +18,13 @@ namespace llama
                      vk::ImageAspectFlags aspect,
                      vma::MemoryUsage memoryType,
                      vk::SampleCountFlagBits msaa = vk::SampleCountFlagBits::e1);
+
+        Image_Vulkan(std::shared_ptr<GraphicsDevice_IVulkan> device,
+                     std::string_view path,
+                     vk::ImageUsageFlags usage,
+                     vk::ImageAspectFlags aspect,
+                     vma::MemoryUsage memoryType);
+
         virtual ~Image_Vulkan();
 
         static vk::Format findFormat(vk::PhysicalDevice physicalDevice, std::initializer_list<vk::Format> options, vk::ImageTiling tiling, vk::FormatFeatureFlags featues);
@@ -53,5 +61,18 @@ namespace llama
                           uint32_t width, uint32_t height,
                           vk::Format format,
                           vk::SampleCountFlagBits msaaLevel);
+    };
+
+    class SampledImage_IVulkan : public SampledImage_T, public Image_Vulkan
+    {
+        friend class ConstantSet_IVulkan;
+
+    public:
+
+        SampledImage_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, std::string_view path);
+
+    private:
+
+        vk::UniqueSampler m_sampler;
     };
 }

@@ -19,7 +19,7 @@ namespace llama
 
         void tick() override;
 
-        void setShader(Shader shader) override;
+        void setShader(Shader shader, Shader shader2) override;
 
         inline vk::Device getDevice() const { return m_context->getDevice(); }
         inline vk::RenderPass getRenderPass() const { return m_context->getRenderPass(); }
@@ -37,6 +37,13 @@ namespace llama
         ConstantBuffer t_constantBuffer;
         ConstantSet t_constantSet;
         float t_colors;
+
+        ConstantBuffer t_llamaConstants;
+        VertexBuffer t_llamaVertex;
+        Shader t_llamaShader;
+        SampledImage t_llamaImage;
+        ConstantSet t_llamaConstantSet;
+
 
         struct SyncObjects
         {

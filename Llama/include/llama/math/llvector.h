@@ -131,8 +131,6 @@ namespace llama
         __m128 m_sse;
 
     };
-
-    
 }
 
 #include "llvector.inl"

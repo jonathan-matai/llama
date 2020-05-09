@@ -16,7 +16,7 @@ namespace llama
 
     private:
 
-        static vk::DescriptorType getVkDescriptorType(ConstantResource_T::Type type);
+        // static vk::DescriptorType getVkDescriptorType(ConstantResource_T::Type type);
 
         vk::UniqueDescriptorPool m_pool;
         std::vector<vk::UniqueDescriptorSet> m_sets;

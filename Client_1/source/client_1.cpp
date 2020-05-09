@@ -69,9 +69,10 @@ int main()
 
     llama::Renderer renderer = llama::createRenderer(device, window);
 
-    llama::Shader shader = llama::createShader(renderer, "resources/shaders/triangles/triangles.json");
+    llama::Shader shader1 = llama::createShader(renderer, "resources/shaders/triangles/triangles.json");
+    llama::Shader shader2 = llama::createShader(renderer, "resources/shaders/image2d/image2d.json");
 
-    renderer->setShader(shader);
+    renderer->setShader(shader1, shader2);
 
     while (!window->shouldClose())
     {

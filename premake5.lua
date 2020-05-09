@@ -68,7 +68,8 @@ workspace "Llama"
             "$(VULKAN_SDK)/Include",
             "%{prj.name}/vendor/glfw/include",
             "%{prj.name}/vendor/VulkanMemoryAllocators",
-            "%{prj.name}/vendor/json"
+            "%{prj.name}/vendor/json",
+            "%{prj.name}/vendor/stb"
         }
 
         files

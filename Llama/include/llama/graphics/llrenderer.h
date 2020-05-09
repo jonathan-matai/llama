@@ -27,7 +27,7 @@ namespace llama
 
         virtual void tick() = 0;
 
-        virtual void setShader(Shader shader) = 0;
+        virtual void setShader(Shader shader, Shader shader2) = 0;
 
     };
 

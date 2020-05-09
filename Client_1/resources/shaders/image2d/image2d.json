@@ -1,0 +1,56 @@
+{
+    "modules" :
+    {
+        "vertex" : "image2d.vert.spv",
+        "fragment" : "image2d.frag.spv"
+    },
+
+    "source" :
+    {
+        "vertex" : "image2d.vert",
+        "fragment" : "image2d.frag"
+    },
+
+    "vertexBindings" :
+    [
+        {
+            "locations" :
+            [
+                {
+                    "type" : "float4",
+                    "offset" : 0
+                }
+            ],
+            "size" : 16,
+            "type" : "vertex"
+        }
+    ],
+
+    "descriptorBindings" :
+    [
+        [
+            {
+                "type" : "constantArrayBuffer",
+                "stage" : "vertex"
+            },
+            {
+                "type" : "sampledImage",
+                "stage" : "fragment"
+            }
+        ]
+    ],
+
+    "vertexTopology" : "triangleList",
+
+    "polygonMode" : "fill",
+
+    "backfaceCulling" : false,
+
+    "smoothTextureLevel" : 0.0,
+
+    "lineWidth" : 5.0,
+
+    "depthTest" : true,
+
+    "blending" : true
+}

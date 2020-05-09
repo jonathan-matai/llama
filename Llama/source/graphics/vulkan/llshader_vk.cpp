@@ -470,10 +470,10 @@ vk::DescriptorType llama::Shader_IVulkan::descriptorTypeStringtoVkDesriptorType(
         return vk::DescriptorType::eStorageBuffer;
     if (type == "storageArrayBuffer")
         return vk::DescriptorType::eStorageBufferDynamic;
-    if (type == "sampler")
+    if (type == "sampledImage")
         return vk::DescriptorType::eCombinedImageSampler;
 
-    logfile()->print(Colors::RED, "Invalid Descriptor Type \"%*s\"", type.size(), type.data());
+    logfile()->print(Colors::RED, LLAMA_DEBUG_INFO, "Invalid Descriptor Type \"%*s\"", type.size(), type.data());
 
     return vk::DescriptorType();
 }
