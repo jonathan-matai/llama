@@ -4,3 +4,6 @@
 [submodule "Llama/vendor/glfw"]
 	path = Llama/vendor/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "Llama/vendor/stb"]
+	path = Llama/vendor/stb
+	url = https://github.com/nothings/stb.git
