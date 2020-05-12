@@ -16,6 +16,15 @@
 
 namespace llama
 {
+
+    union float2;
+
+    inline float2 operator*(float value, const float2& vec);
+    inline float length(const float2& vec);
+    inline float2 normalize(const float2& vec);
+    inline float dot(const float2& a, const float2& b);
+    inline float cross(const float2& a, const float2& b);
+
     union float2
     {
     public:
@@ -55,6 +64,14 @@ namespace llama
 
     };
 
+    union float3;
+
+    inline float3 operator*(float value, const float3& vec);
+    inline float length(const float3& vec);
+    inline float3 normalize(const float3& vec);
+    inline float dot(const float3& a, const float3& b);
+    inline float3 cross(const float3& a, const float3& b);
+
     union float3
     {
     public:
@@ -93,6 +110,13 @@ namespace llama
         __m128 m_sse;
 
     };
+
+    union float4;
+
+    inline float4 operator*(float value, const float4& vec);
+    inline float length(const float4& vec);
+    inline float4 normalize(const float4& vec);
+    inline float dot(const float4& a, const float4& b);
 
     union float4
     {

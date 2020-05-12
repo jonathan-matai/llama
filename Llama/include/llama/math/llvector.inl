@@ -36,10 +36,11 @@
     [67] The value stored in w (00 = x, 01 = y, 10 = z, 11 = w)
     */
 
-inline llama::float2::float2()                                      { m_sse = _mm_set_ps1(0.0f); }
-inline llama::float2::float2(const float2& other)                   { m_sse = other.m_sse; }
-inline llama::float2::float2(float value)                           { m_sse = _mm_set_ps(0.0f, 0.0f, value, value); }
-inline llama::float2::float2(float x, float y)                      { m_sse = _mm_set_ps(0.0f, 0.0f, y, x); }
+llama::float2::float2()                                             { m_sse = _mm_set_ps1(0.0f); }
+llama::float2::float2(const float2& other)                          { m_sse = other.m_sse; }
+llama::float2::float2(float value)                                  { m_sse = _mm_set_ps(0.0f, 0.0f, value, value); }
+llama::float2::float2(float x, float y)                             { m_sse = _mm_set_ps(0.0f, 0.0f, y, x); }
+llama::float2::float2(__m128 sse)                                   { m_sse = sse; }
 
 llama::float2 llama::float2::operator+(const float2& vec)           { return _mm_add_ps(m_sse, vec.m_sse); }
 llama::float2 llama::float2::operator-(const float2& vec)           { return _mm_sub_ps(m_sse, vec.m_sse); }
@@ -65,6 +66,7 @@ llama::float3::float3()                                             { m_sse = _m
 llama::float3::float3(const float3& other)                          { m_sse = other.m_sse; }
 llama::float3::float3(float value)                                  { m_sse = _mm_set_ps(0.0f, value, value, value); }
 llama::float3::float3(float x, float y, float z)                    { m_sse = _mm_set_ps(0.0f, z, y, x); }
+llama::float3::float3(__m128 sse)                                   { m_sse = sse; }
 
 llama::float3 llama::float3::operator+(const float3& vec)           { return _mm_add_ps(m_sse, vec.m_sse); }
 llama::float3 llama::float3::operator-(const float3& vec)           { return _mm_sub_ps(m_sse, vec.m_sse); }
@@ -104,6 +106,7 @@ llama::float4::float4()                                             { m_sse = _m
 llama::float4::float4(const float4& other)                          { m_sse = other.m_sse; }
 llama::float4::float4(float value)                                  { m_sse = _mm_set_ps1(value); }
 llama::float4::float4(float x, float y, float z, float w)           { m_sse = _mm_set_ps(w, z, y, x); }
+llama::float4::float4(__m128 sse)                                   { m_sse = sse; }
 
 llama::float4 llama::float4::operator+(const float4& vec)           { return _mm_add_ps(m_sse, vec.m_sse); }
 llama::float4 llama::float4::operator-(const float4& vec)           { return _mm_sub_ps(m_sse, vec.m_sse); }

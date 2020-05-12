@@ -11,3 +11,6 @@
 
 ## Error Handling
 - Throw and catch std::runtime_error objects
+
+## Math Library
+- Multiply vector and matrix (Operators)

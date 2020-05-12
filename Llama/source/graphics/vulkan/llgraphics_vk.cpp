@@ -19,7 +19,7 @@ llama::GraphicsDevice_IVulkan::GraphicsDevice_IVulkan()
     for (uint32_t i = 0; i < glfwExtensionCount; ++i)
         extensions.push_back(glfwExtensions[i]);
 
-    createVulkanInstance({ "VK_LAYER_KHRONOS_validation", "VK_LAYER_LUNARG_monitor" }, extensions);
+    createVulkanInstance({ "VK_LAYER_KHRONOS_validation" }, extensions);
     createVulkanDebugUtilsMessenger();
     createVulkanPhysicalDevice();
     createVulkanLogicalDevice({ "VK_LAYER_KHRONOS_validation" }, { "VK_KHR_swapchain" });

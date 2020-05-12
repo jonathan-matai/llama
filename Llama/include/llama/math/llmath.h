@@ -13,6 +13,7 @@
 #pragma once
 
 #include <immintrin.h>
+#include <cmath>
 
 #ifdef min
 #undef min
