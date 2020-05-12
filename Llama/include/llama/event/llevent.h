@@ -33,6 +33,7 @@ namespace llama
     {
         ANY_EVENT = 0,
         CLOSE_APPLICATION,
+        TICK,
         BEGIN_USER_IMPLEMENTATION
     };
 
@@ -77,6 +78,26 @@ namespace llama
         CloseApplicationEvent() :
             Event(InternalEventType::CLOSE_APPLICATION, EventPriority::IMMEDIATE, sizeof(CloseApplicationEvent))
         { }
+
+        static const EventTypeID s_eventTypeID = InternalEventType::CLOSE_APPLICATION;
+    };
+
+    class TickEvent : public Event
+    {
+    public:
+
+        TickEvent(uint32_t tickrateIndex, float delta, uint64_t tickIndex) :
+            Event(InternalEventType::TICK, EventPriority::IMMEDIATE, sizeof(TickEvent)),
+            m_tickrateIndex(tickrateIndex),
+            m_deltaTime(delta),
+            m_tickIndex(tickIndex)
+        {}
+
+        uint32_t m_tickrateIndex;
+        float m_deltaTime;
+        uint64_t m_tickIndex;
+
+        static const EventTypeID s_eventTypeID = InternalEventType::TICK;
     };
 
     struct EventDispatcher

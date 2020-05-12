@@ -8,7 +8,6 @@ namespace llama
 {
     class Buffer_Vulkan
     {
-        friend class ConstantSet_IVulkan;
 
     public:
 
@@ -56,10 +55,11 @@ namespace llama
 
     class ConstantBuffer_IVulkan : public ConstantBuffer_T, public Buffer_Vulkan
     {
+        friend class ConstantSet_IVulkan;
+
     public:
 
         ConstantBuffer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, size_t elementSize, uint32_t elementCount, uint32_t swapchainSize) :
-            ConstantBuffer_T(elementCount > 1 ? Type::constantArrayBuffer : Type::constantBuffer),
             Buffer_Vulkan(device, getAlignedSize(elementSize, device->getConstantBufferAlignment()) * elementCount * swapchainSize, nullptr, vk::BufferUsageFlagBits::eUniformBuffer, true),
             m_elementCount(elementCount),
             m_swapchainSize(swapchainSize),
@@ -67,7 +67,7 @@ namespace llama
         { }
 
         void* at(uint32_t element, uint32_t swapchainIndex) override;
-        size_t offset(uint32_t element, uint32_t swapchainIndex) override;
+        size_t offset(uint32_t element, uint32_t swapchainIndex = 0);
         size_t size();
     private:
 

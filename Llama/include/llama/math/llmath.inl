@@ -26,3 +26,13 @@ compare_type llama::clamp(compare_type min, compare_type value, compare_type max
 {
     return value < min ? min : (value > max ? max : value);
 }
+
+float llama::round(float number)
+{
+    return std::roundf(number);
+}
+
+double llama::round(double number)
+{
+    return std::round(number);
+}

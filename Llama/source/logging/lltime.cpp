@@ -61,6 +61,36 @@ std::string llama::Timestamp::getString(const char* format, TimeAccuracy accurac
     return std::string(buffer);
 }
 
+void llama::Timestamp::modify(uint64_t amount, TimeAccuracy unit)
+{
+    uint64_t nanoseconds = 0;
+
+    switch (unit)
+    {
+    case TimeAccuracy::NANOSECONDS:
+        nanoseconds = amount;
+        break;
+    case TimeAccuracy::MICROSECONDS:
+        nanoseconds = amount * 1'000;
+        break;
+    case TimeAccuracy::MILLISECONDS:
+        nanoseconds = amount * 1'000'000;
+        break;
+    case TimeAccuracy::SECONDS:
+        nanoseconds = amount * 1'000'000'000;
+        break;
+    }
+
+    m_time.tv_sec += static_cast<time_t>(nanoseconds / 1'000'000'000);
+    m_time.tv_nsec += static_cast<time_t>(nanoseconds % 1'000'000'000);
+
+    if (m_time.tv_nsec > 1'000'000'000)
+    {
+        m_time.tv_nsec -= 1'000'000'000;
+        ++m_time.tv_sec;
+    }
+}
+
 std::string llama::duration(const Timestamp& start, const Timestamp& end)
 {
     uint64_t dur = (end.m_time.tv_sec - start.m_time.tv_sec) * 1'000'000'000 + (end.m_time.tv_nsec - start.m_time.tv_nsec);

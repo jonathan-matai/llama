@@ -59,26 +59,32 @@ int main()
     bus->postEvent(llama::CloseApplicationEvent());
     */
 
+    llama::EventBus bus = llama::createEventBus();
+
+    llama::Clock clock = llama::createClock(bus, { 0.0f, 60.0f });
+
     llama::WindowDesc desc;
     desc.width = 800;
     desc.height = 800;
 
-    llama::Window window = llama::createWindow(desc);
+    llama::Window window = llama::createWindow(bus, desc);
 
     llama::GraphicsDevice device = llama::createGraphicsDevice();
 
-    llama::Renderer renderer = llama::createRenderer(device, window);
+    llama::Renderer renderer = llama::createRenderer(bus, device, window);
 
     llama::Shader shader1 = llama::createShader(renderer, "resources/shaders/triangles/triangles.json");
     llama::Shader shader2 = llama::createShader(renderer, "resources/shaders/image2d/image2d.json");
 
     renderer->setShader(shader1, shader2);
 
-    while (!window->shouldClose())
-    {
-        renderer->tick();
-        window->tick();
-    }
+    clock->run();
+
+    //while (!window->shouldClose())
+    //{
+    //    renderer->tick();
+    //    window->tick();
+    //}
         
 
     return 0;

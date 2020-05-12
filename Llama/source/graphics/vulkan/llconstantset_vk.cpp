@@ -25,21 +25,38 @@ llama::ConstantSet_IVulkan::ConstantSet_IVulkan(std::shared_ptr<Shader_IVulkan> 
             switch (resource->getResourceType())
             {
                 case ConstantResource_T::Type::constantBuffer:
-                case ConstantResource_T::Type::constantArrayBuffer:
                 {
                     auto a = std::static_pointer_cast<ConstantBuffer_IVulkan>(resource);
 
                     bufferInfos.push_back(vk::DescriptorBufferInfo(a->m_buffer.first, // Buffer
                                                                    a->offset(0, i), // Offset
-                                                                   a->size() /* Size */));
+                                                                   a->m_alignedSize /* Size */));
 
                     writeSets.push_back(vk::WriteDescriptorSet(m_sets[i].get(), // Descriptor Set
                                                                j, // Binding
                                                                0, // Array Element
                                                                1, // Descriptor Count
-                                                               a->getResourceType() == ConstantResource_T::Type::constantArrayBuffer ? // Type
-                                                               vk::DescriptorType::eUniformBufferDynamic :
-                                                               vk::DescriptorType::eUniformBuffer,
+                                                               a->m_elementCount > 1  ? vk::DescriptorType::eUniformBufferDynamic : vk::DescriptorType::eUniformBuffer,
+                                                               nullptr, // Image Info
+                                                               &*bufferInfos.rbegin(), // Buffer Info
+                                                               nullptr /* Texel Buffer View */));
+
+                    break;
+                }
+
+                case ConstantResource_T::Type::constantArrayBuffer:
+                {
+                    auto a = static_cast<ConstantBuffer_IVulkan*>(std::static_pointer_cast<ConstantArrayBuffer_T>(resource)->getBuffer());
+
+                    bufferInfos.push_back(vk::DescriptorBufferInfo(a->m_buffer.first, // Buffer
+                                                                   a->offset(0, i), // Offset
+                                                                   a->m_alignedSize /* Size */));
+
+                    writeSets.push_back(vk::WriteDescriptorSet(m_sets[i].get(), // Descriptor Set
+                                                               j, // Binding
+                                                               0, // Array Element
+                                                               1, // Descriptor Count
+                                                               vk::DescriptorType::eUniformBufferDynamic,
                                                                nullptr, // Image Info
                                                                &*bufferInfos.rbegin(), // Buffer Info
                                                                nullptr /* Texel Buffer View */));

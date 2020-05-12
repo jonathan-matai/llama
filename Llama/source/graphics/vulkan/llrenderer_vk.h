@@ -14,10 +14,12 @@ namespace llama
     {
     public:
 
-        Renderer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, Window window);
+        Renderer_IVulkan(EventNode node, std::shared_ptr<GraphicsDevice_IVulkan> device, Window window);
         ~Renderer_IVulkan() override;
 
-        void tick() override;
+        //void tick() override;
+
+        EventDispatchState onTick(TickEvent* e) override;
 
         void setShader(Shader shader, Shader shader2) override;
 

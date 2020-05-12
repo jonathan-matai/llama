@@ -11,16 +11,14 @@ namespace llama
     {
     public:
 
-        Window_I(const WindowDesc& description);
+        Window_I(EventNode node, const WindowDesc& description);
         ~Window_I() override;
 
     private:
 
         static void debugCallback(int error, const char* description);
 
-        bool shouldClose() override;
-
-        void tick() override;
+        EventDispatchState onTick(TickEvent* e) override;
 
         GLFWwindow* getGLFWWindowHandle() const override;
 
@@ -28,7 +26,8 @@ namespace llama
     };
 }
 
-llama::Window_I::Window_I(const WindowDesc& description)
+llama::Window_I::Window_I(EventNode node, const WindowDesc& description) :
+    Window_T(node)
 {
     Timestamp start;
 
@@ -48,9 +47,6 @@ llama::Window_I::Window_I(const WindowDesc& description)
 
 llama::Window_I::~Window_I()
 {
-    //while (!glfwWindowShouldClose(m_window))
-    //    glfwPollEvents();
-
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
@@ -60,14 +56,17 @@ void llama::Window_I::debugCallback(int error, const char* description)
     logfile()->print(Colors::RED, "GLFW Error %x: %s", error, description);
 }
 
-bool llama::Window_I::shouldClose()
+llama::EventDispatchState llama::Window_I::onTick(TickEvent* e)
 {
-    return glfwWindowShouldClose(m_window) != 0;
-}
+    if (e->m_tickrateIndex != 0)
+        return EventDispatchState::IGNORED;
 
-void llama::Window_I::tick()
-{
     glfwPollEvents();
+
+    if (glfwWindowShouldClose(m_window) != 0)
+        m_node->postEvent(CloseApplicationEvent());
+
+    return EventDispatchState::PROCESSED;
 }
 
 GLFWwindow* llama::Window_I::getGLFWWindowHandle() const
@@ -75,7 +74,7 @@ GLFWwindow* llama::Window_I::getGLFWWindowHandle() const
     return m_window;
 }
 
-llama::Window llama::createWindow(const WindowDesc& description)
+llama::Window llama::createWindow(EventNode node, const WindowDesc& description)
 {
-    return std::make_shared<Window_I>(description);
+    return std::make_shared<Window_I>(node, description);
 }

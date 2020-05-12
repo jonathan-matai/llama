@@ -38,6 +38,9 @@ namespace llama
 
     inline uint8_t hammingWeight(uint32_t bitfield);
     inline uint8_t hammingWeight(uint64_t bitfield);
+
+    inline float round(float number);
+    inline double round(double number);
  
 }
 
