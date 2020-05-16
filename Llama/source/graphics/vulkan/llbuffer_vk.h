@@ -2,7 +2,7 @@
 
 #include "graphics/llbuffer.h"
 
-#include "llgraphics_vk.h"
+#include "llrenderer_vk.h"
 
 namespace llama
 {
@@ -59,18 +59,24 @@ namespace llama
 
     public:
 
-        ConstantBuffer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, size_t elementSize, uint32_t elementCount, uint32_t swapchainSize) :
-            Buffer_Vulkan(device, getAlignedSize(elementSize, device->getConstantBufferAlignment()) * elementCount * swapchainSize, nullptr, vk::BufferUsageFlagBits::eUniformBuffer, true),
+        ConstantBuffer_IVulkan(std::shared_ptr<Renderer_IVulkan> renderer, size_t elementSize, uint32_t elementCount) :
+            Buffer_Vulkan(renderer->getGraphicsDevice(), 
+                          getAlignedSize(elementSize, renderer->getGraphicsDevice()->getConstantBufferAlignment()) * elementCount * renderer->getSwapchainSize(), 
+                          nullptr, 
+                          vk::BufferUsageFlagBits::eUniformBuffer, 
+                          true),
             m_elementCount(elementCount),
-            m_swapchainSize(swapchainSize),
-            m_alignedSize(getAlignedSize(elementSize, device->getConstantBufferAlignment()))
+            m_swapchainSize(renderer->getSwapchainSize()),
+            m_alignedSize(getAlignedSize(elementSize, renderer->getGraphicsDevice()->getConstantBufferAlignment())),
+            m_renderer(renderer)
         { }
 
-        void* at(uint32_t element, uint32_t swapchainIndex) override;
-        size_t offset(uint32_t element, uint32_t swapchainIndex = 0);
+        void* at(uint32_t element, bool forceIndex = false) override;
+        size_t offset(uint32_t element, uint32_t swapchainIndex);
         size_t size();
     private:
 
+        std::shared_ptr<Renderer_IVulkan> m_renderer;
         size_t m_alignedSize;
         uint32_t m_elementCount;
         uint32_t m_swapchainSize;

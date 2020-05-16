@@ -12,11 +12,13 @@
 
 #pragma once
 
-#include "llgraphics.h"
-#include "llconstantset.h"
+#include "llconstantresource.h"
 
 namespace llama
 {
+    LLAMA_CLASS_DECLARATION(Renderer);
+    LLAMA_CLASS_DECLARATION(GraphicsDevice);
+
     class VertexBuffer_T
     {
     public:
@@ -28,7 +30,7 @@ namespace llama
         VertexBuffer_T() { }
     };
 
-    using VertexBuffer = std::shared_ptr<VertexBuffer_T>;
+    LLAMA_CLASS_DECLARATION(VertexBuffer);
 
     LLAMA_API VertexBuffer createVertexBuffer(GraphicsDevice device, size_t size, const void* data);
 
@@ -43,7 +45,7 @@ namespace llama
         IndexBuffer_T() { }
     };
 
-    using IndexBuffer = std::shared_ptr<IndexBuffer_T>;
+    LLAMA_CLASS_DECLARATION(IndexBuffer);
 
     LLAMA_API IndexBuffer createIndexBuffer(GraphicsDevice device, const std::vector<uint16_t>& indices);
     LLAMA_API IndexBuffer createIndexBuffer(GraphicsDevice device, const std::vector<uint32_t>& indices);
@@ -56,13 +58,12 @@ namespace llama
         virtual ~ConstantBuffer_T() = default;
 
         template<typename ElementType>
-        ElementType& at(uint32_t element = 0, uint32_t swapchainIndex = 0)
+        ElementType& at(uint32_t element = 0)
         {
-            return *static_cast<ElementType*>(at(element, swapchainIndex));
+            return *static_cast<ElementType*>(at(element));
         }
 
-
-        virtual void* at(uint32_t element = 0, uint32_t swapchainIndex = 0) = 0;
+        virtual void* at(uint32_t element, bool forceIndex = false) = 0;
 
     protected:
 
@@ -70,9 +71,11 @@ namespace llama
             ConstantResource_T(Type::constantBuffer) { }
     };
 
-    using ConstantBuffer = std::shared_ptr<ConstantBuffer_T>;
+    LLAMA_CLASS_DECLARATION(ConstantBuffer);
 
-    LLAMA_API ConstantBuffer createConstantBuffer(GraphicsDevice device, size_t elementSize, uint32_t elementCount = 1, uint32_t swapchainSize = 1);
+    LLAMA_API ConstantBuffer createConstantBuffer(Renderer renderer, size_t elementSize, uint32_t elementCount = 1);
+
+
 
     class ConstantArrayBuffer_T : public ConstantResource_T
     {
@@ -81,12 +84,12 @@ namespace llama
         virtual ~ConstantArrayBuffer_T() = default;
 
         template<typename ElementType>
-        ElementType& at(uint32_t element = 0, uint32_t swapchainIndex = 0)
+        ElementType& at(uint32_t element = 0)
         {
-            return *static_cast<ElementType*>(at(element, swapchainIndex));
+            return *static_cast<ElementType*>(at(element));
         }
 
-        virtual void* at(uint32_t element = 0, uint32_t swapchainIndex = 0) = 0;
+        virtual void* at(uint32_t element = 0) = 0;
 
         virtual uint32_t addElement() = 0;
         virtual void removeElement(uint32_t index) = 0;
@@ -99,7 +102,7 @@ namespace llama
             ConstantResource_T(Type::constantArrayBuffer) { }
     };
 
-    using ConstantArrayBuffer = std::shared_ptr<ConstantArrayBuffer_T>;
+    LLAMA_CLASS_DECLARATION(ConstantArrayBuffer);
 
-    LLAMA_API ConstantArrayBuffer createConstantArrayBuffer(GraphicsDevice device, size_t elementSize, uint32_t maxElementCount = 1000, uint32_t swapchainSize = 1);
+    LLAMA_API ConstantArrayBuffer createConstantArrayBuffer(Renderer renderer, size_t elementSize, uint32_t maxElementCount = 1000);
 }

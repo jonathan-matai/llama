@@ -1,6 +1,8 @@
 #include "llpch.h"
 #include "llconstantset_vk.h"
 
+#include "llbuffer_vk.h"
+
 llama::ConstantSet_IVulkan::ConstantSet_IVulkan(std::shared_ptr<Shader_IVulkan> shader, uint32_t setIndex, std::initializer_list<ConstantResource> resources)
 {
     m_pool = shader->createPool(setIndex);

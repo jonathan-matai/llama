@@ -20,9 +20,6 @@ namespace llama
             // When the last tick happened
             Timestamp lastTick;
 
-            // When the next tick should happen
-            Timestamp nexTickDueTime;
-
             // The ideal Interval between two ticks
             uint64_t maxTickDurationNs;
 
@@ -51,9 +48,6 @@ namespace llama
         // In Seconds
         static constexpr float s_tickrateReportInterval = 2.0f;
         Timestamp m_lastTickrateReport;
-
-        // If a tick should have happened more than this time ago, ticks will get skipped
-        static constexpr uint32_t maxTimeBehindMs = 500;
     };
     
 }
@@ -83,7 +77,7 @@ void llama::Clock_I::run()
     {
         Timestamp now;
         for (auto& a : m_tickrates)
-            a.lastTick = a.nexTickDueTime = now;
+            a.lastTick = now;
 
         m_lastTickrateReport = now;
     }
@@ -94,11 +88,12 @@ void llama::Clock_I::run()
 
         for (uint32_t i = 0; i < m_tickrates.size(); ++i)
         {
-            if(m_tickrates[i].maxTickDurationNs == 0 || now > m_tickrates[i].nexTickDueTime)
+            auto delta = duration(m_tickrates[i].lastTick, now, TimeAccuracy::NANOSECONDS);
+
+            if (delta > m_tickrates[i].maxTickDurationNs)
             {
                 // Send the tick event
-                auto duration = llama::duration(m_tickrates[i].lastTick, now, TimeAccuracy::NANOSECONDS);
-                m_eventBus->postEvent(TickEvent(i, duration / 1'000'000.0f, m_tickrates[i].tickCount));
+                m_eventBus->postEvent(TickEvent(i, delta / 1'000'000.0f, m_tickrates[i].tickCount));
 
                 // Increase Tick Counter
                 ++m_tickrates[i].tickCount;
@@ -106,19 +101,6 @@ void llama::Clock_I::run()
                 // Set Time of Last Tick
                 m_tickrates[i].lastTick = now;
 
-                if (m_tickrates[i].maxTickDurationNs > 0)
-                {
-                    auto behind = llama::duration(m_tickrates[i].nexTickDueTime, now, TimeAccuracy::MILLISECONDS);
-
-                    if (behind > maxTimeBehindMs)
-                    {
-                        m_tickrates[i].nexTickDueTime = now;
-                        logfile()->print(Colors::YELLOW, LLAMA_DEBUG_INFO, "Static Tickrate #%d cannot be maintained! Skipping %d ms", i, static_cast<uint32_t>(behind));
-                    }
-
-                    // Increase due time
-                    m_tickrates[i].nexTickDueTime.modify(m_tickrates[i].maxTickDurationNs, TimeAccuracy::NANOSECONDS);
-                }
             }
         }
 
@@ -131,8 +113,6 @@ void llama::Clock_I::run()
             for (uint32_t i = 0; i < m_tickrates.size(); ++i)
             {
                 uint32_t tps = static_cast<uint32_t>(llama::round((m_tickrates[i].tickCount - m_tickrates[i].lastTickCount) / timeSinceLastReport));
-
-                //uint32_t tps = static_cast<uint32_t>(m_tickrates[i].tickCount - m_tickrates[i].lastTickCount);
 
                 rates += (std::to_string(i) + " : " + std::to_string(tps) + ", ");
                 m_tickrates[i].lastTickCount = m_tickrates[i].tickCount;

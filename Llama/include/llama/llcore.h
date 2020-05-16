@@ -51,6 +51,12 @@
 // memcpy
 #include <cstring>
 
+// Declares an engine internal Class, must be only used in the namespace llama!
+#define LLAMA_CLASS_DECLARATION(name) using name = std::shared_ptr<class name##_T>;
+
+// llama::Flags
+#include "llflags.h"
+
 typedef uint8_t byte;
 
 // llama::Color

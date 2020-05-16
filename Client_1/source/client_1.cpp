@@ -59,6 +59,12 @@ int main()
     bus->postEvent(llama::CloseApplicationEvent());
     */
 
+    llama::Group group(0);
+    group.addEntity(llama::Entity(1));
+    group.addEntity(llama::Entity(2));
+
+
+
     llama::EventBus bus = llama::createEventBus();
 
     llama::Clock clock = llama::createClock(bus, { 0.0f, 60.0f });
@@ -79,13 +85,6 @@ int main()
     renderer->setShader(shader1, shader2);
 
     clock->run();
-
-    //while (!window->shouldClose())
-    //{
-    //    renderer->tick();
-    //    window->tick();
-    //}
-        
 
     return 0;
 }

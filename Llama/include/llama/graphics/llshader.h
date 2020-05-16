@@ -12,10 +12,10 @@
 
 #pragma once
 
-#include "llrenderer.h"
-
 namespace llama
 {
+    using Renderer = std::shared_ptr<class Renderer_T>;
+
     class Shader_T
     {
     public:
@@ -24,7 +24,7 @@ namespace llama
 
     };
 
-    typedef std::shared_ptr<Shader_T> Shader;
+    using Shader = std::shared_ptr<Shader_T>;
     
     LLAMA_API Shader createShader(Renderer renderer, std::string_view descriptorFilePath);
 }

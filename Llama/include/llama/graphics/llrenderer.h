@@ -15,18 +15,17 @@
 #include "llgraphics.h"
 #include "llwindow.h"
 #include "../event/llevent.h"
+#include "../entity/llentity.h"
 
 namespace llama
 {
-    typedef std::shared_ptr<class Shader_T> Shader;
+    using Shader = std::shared_ptr<class Shader_T>;
 
     class Renderer_T
     {
     public:
 
         virtual ~Renderer_T() = default;
-
-        //virtual void tick() = 0;
 
         virtual void setShader(Shader shader, Shader shader2) = 0;
 

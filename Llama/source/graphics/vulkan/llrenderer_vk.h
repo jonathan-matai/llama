@@ -4,13 +4,15 @@
 #include "llwindowcontext_vk.h"
 
 
-#include "llbuffer_vk.h"
+#include "graphics/llbuffer.h"
+
+#include "math/llmath.h"
 
 namespace llama
 {
     class Shader_IVulkan;
 
-    class Renderer_IVulkan : public Renderer_T
+    class Renderer_IVulkan : public Renderer_T, public std::enable_shared_from_this<Renderer_IVulkan>
     {
     public:
 
@@ -26,12 +28,25 @@ namespace llama
         inline vk::Device getDevice() const { return m_context->getDevice(); }
         inline vk::RenderPass getRenderPass() const { return m_context->getRenderPass(); }
         inline uint32_t getSwapchainSize() const { return static_cast<uint32_t>(m_context->m_frameBuffers.size()); }
+        inline uint32_t getSwapchainIndex() const { return m_swapchainIndex; }
+        inline std::shared_ptr<GraphicsDevice_IVulkan> getGraphicsDevice() const { return m_context->getGraphicsDevie(); }
 
     private:
 
         void recordCommandBuffers();
 
         bool recreateIfOutOfDate(vk::Result result, const DebugInfo& debugInfo, std::string_view message);
+
+        struct Constants
+        {
+            float2 offset;
+            float3x3 rotation;
+
+            Constants(float2 o, float3x3 r) :
+                offset(o),
+                rotation(r)
+            { }
+        };
 
         std::shared_ptr<Shader_IVulkan> t_shader;
 

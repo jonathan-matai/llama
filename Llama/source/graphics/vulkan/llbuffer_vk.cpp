@@ -65,10 +65,10 @@ llama::Buffer_Vulkan::~Buffer_Vulkan()
     m_allocator.destroyBuffer(m_buffer.first, m_buffer.second);
 }
 
-void* llama::ConstantBuffer_IVulkan::at(uint32_t element, uint32_t swapchainIndex)
+void* llama::ConstantBuffer_IVulkan::at(uint32_t element, bool forceIndex)
 {
     // Cast to byte* to increment pointer
-    return static_cast<byte*>(m_mappedData) + offset(element, swapchainIndex);
+    return static_cast<byte*>(m_mappedData) + offset(element, forceIndex ? 0 : m_renderer->getSwapchainIndex());
 }
 
 size_t llama::ConstantBuffer_IVulkan::offset(uint32_t element, uint32_t swapchainIndex)

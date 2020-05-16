@@ -23,8 +23,13 @@
 #include "llama/network/llclientsocket.h"
 #include "llama/network/llserversocket.h"
 
+#include "llama/graphics/llwindow.h"
 #include "llama/graphics/llshader.h"
 #include "llama/graphics/llimage.h"
 #include "llama/graphics/llbuffer.h"
+#include "llama/graphics/llrenderer.h"
 
 #include "llama/math/llmath.h"
+
+#include "llama/entity/llgroup.h"
+#include "llama/entity/llentitymanager.h"
