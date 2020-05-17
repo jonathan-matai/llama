@@ -9,9 +9,9 @@ llama::ConstantSet_IVulkan::ConstantSet_IVulkan(std::shared_ptr<Shader_IVulkan> 
 
     std::vector<vk::DescriptorSetLayout> layouts(shader->getSwapchainSize(), shader->m_setLayouts[setIndex].get());
 
-    assert_vulkan(shader->getDevice().allocateDescriptorSetsUnique(vk::DescriptorSetAllocateInfo(m_pool.get(),
-                                                                                                 static_cast<uint32_t>(layouts.size()), 
-                                                                                                 layouts.data())),
+    assert_vulkan(shader->getDevice().allocateDescriptorSets(vk::DescriptorSetAllocateInfo(m_pool.get(),
+                                                                                           static_cast<uint32_t>(layouts.size()), 
+                                                                                           layouts.data())),
                   m_sets, LLAMA_DEBUG_INFO, "vk::Device::allocateDescriptorSetsUnique() failed!");
 
     std::list<vk::DescriptorBufferInfo> bufferInfos;
@@ -34,7 +34,7 @@ llama::ConstantSet_IVulkan::ConstantSet_IVulkan(std::shared_ptr<Shader_IVulkan> 
                                                                    a->offset(0, i), // Offset
                                                                    a->m_alignedSize /* Size */));
 
-                    writeSets.push_back(vk::WriteDescriptorSet(m_sets[i].get(), // Descriptor Set
+                    writeSets.push_back(vk::WriteDescriptorSet(m_sets[i], // Descriptor Set
                                                                j, // Binding
                                                                0, // Array Element
                                                                1, // Descriptor Count
@@ -54,7 +54,7 @@ llama::ConstantSet_IVulkan::ConstantSet_IVulkan(std::shared_ptr<Shader_IVulkan> 
                                                                    a->offset(0, i), // Offset
                                                                    a->m_alignedSize /* Size */));
 
-                    writeSets.push_back(vk::WriteDescriptorSet(m_sets[i].get(), // Descriptor Set
+                    writeSets.push_back(vk::WriteDescriptorSet(m_sets[i], // Descriptor Set
                                                                j, // Binding
                                                                0, // Array Element
                                                                1, // Descriptor Count
@@ -74,7 +74,7 @@ llama::ConstantSet_IVulkan::ConstantSet_IVulkan(std::shared_ptr<Shader_IVulkan> 
                                                                  a->m_imageView,
                                                                  vk::ImageLayout::eShaderReadOnlyOptimal));
 
-                    writeSets.push_back(vk::WriteDescriptorSet(m_sets[i].get(), // Descriptor Set
+                    writeSets.push_back(vk::WriteDescriptorSet(m_sets[i], // Descriptor Set
                                                                j, // Binding
                                                                0, // Array Element
                                                                1, // Descriptor Count
@@ -93,20 +93,3 @@ llama::ConstantSet_IVulkan::ConstantSet_IVulkan(std::shared_ptr<Shader_IVulkan> 
     shader->getDevice().updateDescriptorSets(writeSets, { });
     
 }
-/*
-vk::DescriptorType llama::ConstantSet_IVulkan::getVkDescriptorType(ConstantResource_T::Type type)
-{
-    using IType = ConstantResource_T::Type;
-    using OType = vk::DescriptorType;
-
-    switch (type)
-    {
-    case IType::sampler:                return OType::eCombinedImageSampler;
-    case IType::constantBuffer:         return OType::eUniformBuffer;
-    case IType::constantArrayBuffer:    return OType::eUniformBufferDynamic;
-    case IType::storageBuffer:          return OType::eStorageBuffer;
-    case IType::storageArrayBuffer:     return OType::eStorageBufferDynamic;
-    default:                            return OType::eSampler;
-    }
-}
-*/

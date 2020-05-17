@@ -14,13 +14,13 @@ struct CalculatorEvent : public llama::Event
     static const llama::EventTypeID s_eventTypeID = CALCULATOR_EVENT;
 
     CalculatorEvent(int a, char op, int b) :
-        llama::Event(CALCULATOR_EVENT, llama::EventPriority::IMMEDIATE, sizeof(CalculatorEvent)),
+        llama::Event(CALCULATOR_EVENT, { }, sizeof(CalculatorEvent)),
         m_a(a),
         m_b(b),
         m_operator(op) { }
 
     CalculatorEvent() :
-        llama::Event(CALCULATOR_EVENT, llama::EventPriority::IMMEDIATE, sizeof(CalculatorEvent)) { }
+        llama::Event(CALCULATOR_EVENT, { }, sizeof(CalculatorEvent)) { }
 };
 
 struct PrintEvent : public llama::Event
@@ -30,7 +30,7 @@ struct PrintEvent : public llama::Event
     static const llama::EventTypeID s_eventTypeID = PRINT_EVENT;
 
     PrintEvent(std::string_view message) :
-        llama::Event(PRINT_EVENT, llama::EventPriority::IMMEDIATE, sizeof(PrintEvent))
+        llama::Event(PRINT_EVENT, { }, sizeof(PrintEvent))
     {
         memcpy(m_message, message.data(), message.size() < 64 ? message.size() : 64);
         m_message[message.size()] = '\0';

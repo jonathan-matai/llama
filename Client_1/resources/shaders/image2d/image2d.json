@@ -44,13 +44,13 @@
 
     "polygonMode" : "fill",
 
-    "backfaceCulling" : false,
+    "backfaceCulling" : true,
 
     "smoothTextureLevel" : 0.0,
 
     "lineWidth" : 5.0,
 
-    "depthTest" : true,
+    "depthTest" : false,
 
     "blending" : true
 }

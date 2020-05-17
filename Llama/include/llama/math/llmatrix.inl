@@ -90,7 +90,10 @@ llama::float2x2 llama::float2x2::operator*=(float value)
 
 llama::float3x3::float3x3()
 {
-    m_sse[0] = m_sse[1] = m_sse[2] = _mm_set_ps1(0.0f);
+    // Create Identity Matrix
+    m_sse[0] = _mm_set_ps(0.0f, 0.0f, 0.0f, 1.0f);
+    m_sse[1] = _mm_set_ps(0.0f, 0.0f, 1.0f, 0.0f);
+    m_sse[2] = _mm_set_ps(0.0f, 1.0f, 0.0f, 0.0f);
 }
 
 llama::float3x3::float3x3(float _a1, float _b1, float _c1, float _a2, float _b2, float _c2, float _a3, float _b3, float _c3)
@@ -223,7 +226,11 @@ llama::float3x3 llama::translation2D(const float2& translation)
 
 llama::float4x4::float4x4()
 {
-    m_sse[0] = m_sse[1] = m_sse[2] = m_sse[3] = _mm_set_ps1(0.0f);
+    // Create Identity Matrix
+    m_sse[0] = _mm_set_ps(0.0f, 0.0f, 0.0f, 1.0f);
+    m_sse[1] = _mm_set_ps(0.0f, 0.0f, 1.0f, 0.0f);
+    m_sse[2] = _mm_set_ps(0.0f, 1.0f, 0.0f, 0.0f);
+    m_sse[2] = _mm_set_ps(1.0f, 0.0f, 0.0f, 0.0f);
 }
 
 llama::float4x4::float4x4(float a1, float b1, float c1, float d1,

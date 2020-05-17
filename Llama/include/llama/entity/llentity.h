@@ -21,17 +21,21 @@ namespace llama
 
     using UID = uint64_t;
 
+    enum class EntityFlags
+    {
+        RENDERABLE = bit(1),
+        SOUNDEMITTING = bit(2),
+        GROUP = bit(3)
+    };
+
     class Entity
     {
+        friend class EntityManager_I;
+        friend class Renderer_IVulkan;
+
     public:
 
-        enum class TypeBits
-        {
-            RENDERABLE = bit(1),
-            SOUNDEMITTING = bit(2)
-        };
-
-        Entity(UID uniqueID) :
+        explicit Entity(UID uniqueID) :
             m_uniqueID(uniqueID)
         { }
 
@@ -43,7 +47,7 @@ namespace llama
 
     protected:
 
-        Flags<TypeBits> m_flags;
+        Flags<EntityFlags> m_flags;
 
         const UID m_uniqueID;
     };
@@ -67,13 +71,29 @@ namespace llama
             m_constantBuffer(constantBuffer),
             m_indexBuffer(indexBuffer)
         {
-            m_flags.set(TypeBits::RENDERABLE);
+            m_flags.set(EntityFlags::RENDERABLE);
             m_arrayIndex = m_constantBuffer->addElement();
         }
 
         virtual ~RenderableEntity()
         {
-            m_constantBuffer->removeElement(m_arrayIndex);
+            if(m_arrayIndex != UINT32_MAX)
+                m_constantBuffer->removeElement(m_arrayIndex);
+        }
+
+        RenderableEntity(const RenderableEntity& e) = delete;
+
+        RenderableEntity(RenderableEntity&& e) :
+            Entity(e.m_uniqueID),
+            m_shader(e.m_shader),
+            m_vertexBuffer(e.m_vertexBuffer),
+            m_constantSet(e.m_constantSet),
+            m_constantBuffer(e.m_constantBuffer),
+            m_indexBuffer(e.m_indexBuffer),
+            m_arrayIndex(e.m_arrayIndex)
+        {
+            m_flags = e.m_flags;
+            e.m_arrayIndex = UINT32_MAX;
         }
 
     protected:

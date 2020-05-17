@@ -10,17 +10,24 @@
  Contains the Entity Group Class
 */
 
+#pragma once
+
 #include "llentity.h"
 
 namespace llama
 {
     class Group : public Entity
     {
+        friend class EntityManager_T;
+        friend class Renderer_IVulkan;
+
     public:
 
-        Group(UID uniqueID) :
+        explicit Group(UID uniqueID) :
             Entity(uniqueID)
-        { }
+        {
+            m_flags.set(EntityFlags::GROUP);
+        }
 
 
         // Adds an Entity to the Group
@@ -36,6 +43,8 @@ namespace llama
         // Get a pointer to an Entity from a UID
         // @entity:         The UID of the entity to retrieve
         inline Entity* getEntity(UID entity);
+
+        inline void onTick(float delta) override;
 
         auto begin() { return m_members.begin(); }
         auto end() { return m_members.end(); }

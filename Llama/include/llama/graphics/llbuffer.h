@@ -32,7 +32,13 @@ namespace llama
 
     LLAMA_CLASS_DECLARATION(VertexBuffer);
 
-    LLAMA_API VertexBuffer createVertexBuffer(GraphicsDevice device, size_t size, const void* data);
+    LLAMA_API VertexBuffer createVertexBuffer(GraphicsDevice device, size_t vertexSize, size_t vertexCount, const void* data);
+
+    template<typename VertexType>
+    VertexBuffer createVertexBuffer(GraphicsDevice device, const std::vector<VertexType>& verticies)
+    {
+        return createVertexBuffer(device, sizeof(VertexType), verticies.size(), verticies.data());
+    }
 
     class IndexBuffer_T
     {

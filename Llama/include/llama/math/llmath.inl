@@ -1,3 +1,4 @@
+#include "llmath.h"
 
 uint8_t llama::hammingWeight(uint32_t bitfield)
 {
@@ -35,4 +36,14 @@ float llama::round(float number)
 double llama::round(double number)
 {
     return std::round(number);
+}
+
+float llama::radians(float degrees)
+{
+    return degrees / 180.0f * PI;
+}
+
+float llama::degrees(float radians)
+{
+    return radians / PI * 180.0f;
 }

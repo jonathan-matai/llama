@@ -19,7 +19,8 @@ struct Vertex_T
 llama::Renderer_IVulkan::Renderer_IVulkan(EventNode node, std::shared_ptr<GraphicsDevice_IVulkan> device, Window window) :
     Renderer_T(node),
     m_context(std::make_unique<WindowContext_IVulkan>(window, device)),
-    m_swapchainIndex(1)
+    m_swapchainIndex(1),
+    m_stopRenderer(node, this, &Renderer_IVulkan::stopRenderer)
 {
     m_syncObjects.resize(m_context->m_frameBuffers.size());
 
@@ -68,24 +69,12 @@ llama::Renderer_IVulkan::Renderer_IVulkan(EventNode node, std::shared_ptr<Graphi
 
 llama::Renderer_IVulkan::~Renderer_IVulkan()
 {
-    m_context->getDevice().waitIdle();
 }
 
 llama::EventDispatchState llama::Renderer_IVulkan::onTick(TickEvent* e)
 {
-    if (e->m_tickrateIndex != 0)
+    if (e->m_tickrateIndex != 0 || m_commandBuffers.empty())
         return EventDispatchState::IGNORED;
-
-
-    if ((t_colors += (e->m_deltaTime / 2000.0f)) > 3.0f)
-        t_colors -= 3.0f;
-
-    t_constantBuffer->at<float>(0) = t_colors;
-
-    t_llamaConstants->at<Constants>(0) = Constants(float2(-.5, -.5), float3x3());
-    t_llamaConstants->at<Constants>(1) = Constants(float2(0.5, -.5), float3x3());
-    t_llamaConstants->at<Constants>(2) = Constants(float2(0.5, 0.5), float3x3());
-    t_llamaConstants->at<Constants>(3) = Constants(float2(-.5, 0.5), float3x3());
 
     // Submit to Queue
 
@@ -125,57 +114,45 @@ llama::EventDispatchState llama::Renderer_IVulkan::onTick(TickEvent* e)
     return EventDispatchState::PROCESSED;
 }
 
-void llama::Renderer_IVulkan::setShader(Shader shader, Shader shader2)
+void llama::Renderer_IVulkan::addEntityManager(EntityManager manager)
 {
-    std::vector<Vertex_T> verticies
-    {
-        Vertex_T(0.0f, 0.0f, 1, 0, 0),
-        Vertex_T(0.0f, -.5f, 0, 1, 0),
-        Vertex_T(0.5f, 0.0f, 0, 0, 1),
-
-        Vertex_T(0.0f, 0.0f, 1, 0, 0),
-        Vertex_T(0.5f, 0.0f, 0, 1, 0),
-        Vertex_T(0.0f, 0.5f, 0, 0, 1),
-
-        Vertex_T(0.0f, 0.0f, 1, 0, 0),
-        Vertex_T(0.0f, 0.5f, 0, 1, 0),
-        Vertex_T(-.5f, 0.0f, 0, 0, 1),
-
-        Vertex_T(0.0f, 0.0f, 1, 0, 0),
-        Vertex_T(-.5f, 0.0f, 0, 1, 0),
-        Vertex_T(0.0f, -.5f, 0, 0, 1),
-    };
-
-    t_vertexBuffer = std::make_shared<VertexBuffer_IVulkan>(m_context->getGraphicsDevie(), sizeof(Vertex_T) * verticies.size(), verticies.data());
-    t_constantBuffer = std::make_shared<ConstantBuffer_IVulkan>(shared_from_this(), sizeof(float), 1);
-
-    t_colors = 0.0f;
-
-    std::vector<float4> llamaVerticies
-    {
-        float4(-.15f, -.3f, 0.0f, 0.0f),
-        float4(0.15f, -.3f, 1.0f, 0.0f),
-        float4(0.15f, 0.3f, 1.0f, 1.0f),
-        float4(0.15f, 0.3f, 1.0f, 1.0f),
-        float4(-.15f, 0.3f, 0.0f, 1.0f),
-        float4(-.15f, -.3f, 0.0f, 0.0f),
-    };
-
-    
-
-    t_llamaVertex = createVertexBuffer(m_context->getGraphicsDevie(), sizeof(float4) * llamaVerticies.size(), llamaVerticies.data());
-
-    t_llamaConstants = createConstantBuffer(shared_from_this(), sizeof(Constants), 4);
-
-    t_llamaImage = llama::createSampledImage(m_context->getGraphicsDevie(), "resources/textures/llama.png");
-
-    t_shader = std::static_pointer_cast<Shader_IVulkan>(shader);
-    t_llamaShader = shader2;
-
-    t_constantSet = createConstantSet(t_shader, 0, { t_constantBuffer });
-    t_llamaConstantSet = createConstantSet(t_llamaShader, 0, { t_llamaConstants, t_llamaImage });
-
+    m_entityManagers.push_back(manager);
     recordCommandBuffers();
+}
+
+void llama::Renderer_IVulkan::unpackGroup(Group* group, vk::CommandBuffer buffer, uint32_t swapchainIndex)
+{
+    for (auto& a : *group)
+    {
+        if (a.second->m_flags.isSet(EntityFlags::RENDERABLE))
+        {
+            auto ro = static_cast<RenderableEntity*>(a.second.get());
+
+            buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, std::static_pointer_cast<Shader_IVulkan>(ro->m_shader)->getPipeline());
+            buffer.bindVertexBuffers(0, { std::static_pointer_cast<VertexBuffer_IVulkan>(ro->m_vertexBuffer)->getBuffer() }, { 0 });
+
+            uint32_t offset = static_cast<uint32_t>(static_cast<ConstantBuffer_IVulkan*>(ro->m_constantBuffer->getBuffer())->offset(ro->m_arrayIndex, m_swapchainIndex));
+
+            buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+                                      std::static_pointer_cast<Shader_IVulkan>(ro->m_shader)->getPipelineLayout(),
+                                      0,
+                                      { std::static_pointer_cast<ConstantSet_IVulkan>(ro->m_constantSet)->m_sets[swapchainIndex] },
+                                      { offset });
+
+            if (ro->m_indexBuffer)
+            {
+                auto ib = std::static_pointer_cast<IndexBuffer_IVulkan>(ro->m_indexBuffer);
+                buffer.bindIndexBuffer(ib->getBuffer(), 0, ib->m_32bitIndices ? vk::IndexType::eUint32 : vk::IndexType::eUint16);
+                buffer.drawIndexed(static_cast<uint32_t>(ib->m_indexCount), 1, 0, 0, 0);
+            }
+            else
+            {
+                buffer.draw(static_cast<uint32_t>(std::static_pointer_cast<VertexBuffer_IVulkan>(ro->m_vertexBuffer)->m_vertexCount), 1, 0, 0);
+            }
+        }
+        else if (a.second->m_flags.isSet(EntityFlags::GROUP))
+            unpackGroup(static_cast<Group*>(a.second.get()), buffer, swapchainIndex);
+    }
 }
 
 void llama::Renderer_IVulkan::recordCommandBuffers()
@@ -210,31 +187,12 @@ void llama::Renderer_IVulkan::recordCommandBuffers()
 
         m_commandBuffers[i]->setScissor(0, { beginInfo.renderArea });
 
-        m_commandBuffers[i]->bindVertexBuffers(0, { std::static_pointer_cast<VertexBuffer_IVulkan>(t_vertexBuffer)->getBuffer() }, { 0 });
-        m_commandBuffers[i]->bindPipeline(vk::PipelineBindPoint::eGraphics, t_shader->getPipeline());
-        m_commandBuffers[i]->bindDescriptorSets(vk::PipelineBindPoint::eGraphics, 
-                                                t_shader->getPipelineLayout(), 
-                                                0, // First Set
-                                                1, &std::static_pointer_cast<ConstantSet_IVulkan>(t_constantSet)->m_sets[i].get(), // Sets
-                                                0, nullptr /* Dynamic Offsets */);
-        m_commandBuffers[i]->draw(12, 1, 0, 0);
+        // START RENDERING
 
-        m_commandBuffers[i]->bindVertexBuffers(0, { std::static_pointer_cast<VertexBuffer_IVulkan>(t_llamaVertex)->getBuffer() }, { 0 });
-        m_commandBuffers[i]->bindPipeline(vk::PipelineBindPoint::eGraphics, std::static_pointer_cast<Shader_IVulkan>(t_llamaShader)->getPipeline());
+        for (auto a : m_entityManagers)
+            unpackGroup(&a->m_entities, m_commandBuffers[i].get(), i);
 
-        for (uint32_t j = 0; j < 4; ++j)
-        {
-            uint32_t offset = static_cast<uint32_t>(std::static_pointer_cast<ConstantBuffer_IVulkan>(t_llamaConstants)->offset(j, m_swapchainIndex));
-
-            m_commandBuffers[i]->bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-                                                    std::static_pointer_cast<Shader_IVulkan>(t_llamaShader)->getPipelineLayout(),
-                                                    0,
-                                                    1, &std::static_pointer_cast<ConstantSet_IVulkan>(t_llamaConstantSet)->m_sets[i].get(),
-                                                    1, &offset);
-
-            m_commandBuffers[i]->draw(6, 1, 0, 0);
-        }
-
+        // END RENDERING
 
         m_commandBuffers[i]->endRenderPass();
         m_commandBuffers[i]->end();
@@ -261,5 +219,13 @@ bool llama::Renderer_IVulkan::recreateIfOutOfDate(vk::Result result, const Debug
         assert_vulkan(result, debugInfo, message);
 
     return false;
+}
+
+llama::EventDispatchState llama::Renderer_IVulkan::stopRenderer(CloseApplicationEvent* e)
+{
+    m_context->getDevice().waitIdle();
+    m_commandBuffers.clear();
+
+    return EventDispatchState::PROCESSED;
 }
 

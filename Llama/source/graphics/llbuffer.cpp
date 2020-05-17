@@ -4,9 +4,9 @@
 #include "vulkan/llrenderer_vk.h"
 #include "vulkan/llbuffer_vk.h"
 
-llama::VertexBuffer llama::createVertexBuffer(GraphicsDevice device, size_t size, const void* data)
+llama::VertexBuffer llama::createVertexBuffer(GraphicsDevice device, size_t vertexSize, size_t vertexCount, const void* data)
 {
-    return std::make_shared<VertexBuffer_IVulkan>(std::static_pointer_cast<GraphicsDevice_IVulkan>(device), size, data);
+    return std::make_shared<VertexBuffer_IVulkan>(std::static_pointer_cast<GraphicsDevice_IVulkan>(device), vertexSize, vertexCount, data);
 }
 
 llama::IndexBuffer llama::createIndexBuffer(GraphicsDevice device, const std::vector<uint16_t>& indices)

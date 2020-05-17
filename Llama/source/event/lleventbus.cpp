@@ -32,12 +32,14 @@ llama::EventBus llama::createEventBus()
 
 void llama::EventBus_I::handleEvent(std::unique_ptr<Event>&& event)
 {
-    if (event->m_priority == EventPriority::IMMEDIATE)
+    if (!event->m_flags.isSet(EventFlags::ALLOW_DEFERRING))
     {
         forwardEvent(event.get());
     }
     else
     {
+        logfile()->print(Colors::RED, LLAMA_DEBUG_INFO, "Event Deferring not yet implemented!");
+
         // If the array is not that big, there is definetly no dispatcher and the event can be ignored
         if (event->m_type > m_dispatchers.size())
             return;

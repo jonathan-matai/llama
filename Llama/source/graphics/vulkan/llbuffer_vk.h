@@ -33,9 +33,12 @@ namespace llama
     {
     public:
 
-        VertexBuffer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, size_t size, const void* data) :
-            Buffer_Vulkan(device, size, data, vk::BufferUsageFlagBits::eVertexBuffer, false)
+        VertexBuffer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, size_t vertexSize, size_t vertexCount, const void* data) :
+            Buffer_Vulkan(device, vertexSize * vertexCount, data, vk::BufferUsageFlagBits::eVertexBuffer, false),
+            m_vertexCount(vertexCount)
         { }
+
+        size_t m_vertexCount;
     };
 
     class IndexBuffer_IVulkan : public IndexBuffer_T, public Buffer_Vulkan
@@ -43,14 +46,19 @@ namespace llama
     public:
 
         IndexBuffer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, const std::vector<uint16_t>& indices) :
-            Buffer_Vulkan(device, indices.size() * sizeof(uint16_t), indices.data(), vk::BufferUsageFlagBits::eIndexBuffer, false)
+            Buffer_Vulkan(device, indices.size() * sizeof(uint16_t), indices.data(), vk::BufferUsageFlagBits::eIndexBuffer, false),
+            m_32bitIndices(false),
+            m_indexCount(indices.size())
         { }
 
         IndexBuffer_IVulkan(std::shared_ptr<GraphicsDevice_IVulkan> device, const std::vector<uint32_t>& indices) :
-            Buffer_Vulkan(device, indices.size() * sizeof(uint32_t), indices.data(), vk::BufferUsageFlagBits::eIndexBuffer, false)
+            Buffer_Vulkan(device, indices.size() * sizeof(uint32_t), indices.data(), vk::BufferUsageFlagBits::eIndexBuffer, false),
+            m_32bitIndices(true),
+            m_indexCount(indices.size())
         { }
 
-
+        bool m_32bitIndices;
+        size_t m_indexCount;
     };
 
     class ConstantBuffer_IVulkan : public ConstantBuffer_T, public Buffer_Vulkan

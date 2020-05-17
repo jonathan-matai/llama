@@ -1,8 +1,9 @@
 ﻿#include <llama.h>
 
 #include <events.h>
-
 #include <cstdio>
+
+#include "coolllama.h"
 
 class Console
 {
@@ -59,13 +60,9 @@ int main()
     bus->postEvent(llama::CloseApplicationEvent());
     */
 
-    llama::Group group(0);
-    group.addEntity(llama::Entity(1));
-    group.addEntity(llama::Entity(2));
-
-
-
     llama::EventBus bus = llama::createEventBus();
+
+    llama::EntityManager manager = llama::createEntityManager(bus);
 
     llama::Clock clock = llama::createClock(bus, { 0.0f, 60.0f });
 
@@ -79,10 +76,13 @@ int main()
 
     llama::Renderer renderer = llama::createRenderer(bus, device, window);
 
-    llama::Shader shader1 = llama::createShader(renderer, "resources/shaders/triangles/triangles.json");
-    llama::Shader shader2 = llama::createShader(renderer, "resources/shaders/image2d/image2d.json");
+    CoolLlama::createStaticResources(device, renderer);
 
-    renderer->setShader(shader1, shader2);
+    manager->addEntity(CoolLlama(1, llama::float2(-.5f, 0.1f)));
+    manager->addEntity(CoolLlama(2, llama::float2(0.0f, 0.2f)));
+    manager->addEntity(CoolLlama(3, llama::float2(0.5f, -.1f)));
+
+    renderer->addEntityManager(manager);
 
     clock->run();
 

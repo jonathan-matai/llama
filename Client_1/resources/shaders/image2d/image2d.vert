@@ -11,7 +11,8 @@ layout(binding = 0) uniform UBO
     mat3 rotation;
 } ubo;
 
-void main() {
-    gl_Position = vec4(i_PosTex.xy + ubo.offset, 0.0, 1.0);
+void main()
+{
+    gl_Position = vec4((vec3(i_PosTex.xy, 0) * ubo.rotation).xy + ubo.offset, 0.0, 1.0);
     o_Tex = i_PosTex.zw;
 }

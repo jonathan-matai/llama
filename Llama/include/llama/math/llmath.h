@@ -42,6 +42,9 @@ namespace llama
 
     inline float round(float number);
     inline double round(double number);
+
+    inline float radians(float degrees);
+    inline float degrees(float radians);
  
 }
 

@@ -14,20 +14,6 @@
 
 namespace llama
 {
-    enum class EventPriority
-    {
-        // Event gets processed immediately on the same thread that posts the message
-        // Only suitable for events that are quick to dispatch
-        IMMEDIATE,
-        // Event gets processed asynchronously on the main thread preferrably the same tick
-        // Only suitable for events that are quick to dispatch
-        HIGH,
-        // Event gets processed asynchronously on a seperate thread, doesn't block the game loop
-        MEDIUM,
-        // Event gets processed asynchronously on a seperate thread, with low priority
-        LOW,
-    };
-
     // Lists all engine related events
     enum InternalEventType
     {
@@ -50,12 +36,19 @@ namespace llama
         DISPATCHED
     };
 
+    enum class EventFlags
+    {
+        LOCAL_ONLY = bit(1),
+        ALLOW_DEFERRING = bit(2),
+        HIGH_PRIORITY = bit(3)
+    };
+
     class Event
     {
     public:
 
         EventTypeID m_type;
-        EventPriority m_priority;
+        Flags<EventFlags> m_flags;
         void* m_creator;
         size_t m_size;
 
@@ -63,9 +56,9 @@ namespace llama
 
     protected:
 
-        Event(EventTypeID type, EventPriority priority, size_t size, void* creator = nullptr) : 
+        Event(EventTypeID type, Flags<EventFlags> flags, size_t size, void* creator = nullptr) :
             m_type(type),
-            m_priority(priority),
+            m_flags(flags),
             m_creator(creator), 
             m_size(size) { }
     };
@@ -76,7 +69,7 @@ namespace llama
     public:
 
         CloseApplicationEvent() :
-            Event(InternalEventType::CLOSE_APPLICATION, EventPriority::IMMEDIATE, sizeof(CloseApplicationEvent))
+            Event(InternalEventType::CLOSE_APPLICATION, { }, sizeof(CloseApplicationEvent))
         { }
 
         static const EventTypeID s_eventTypeID = InternalEventType::CLOSE_APPLICATION;
@@ -87,7 +80,7 @@ namespace llama
     public:
 
         TickEvent(uint32_t tickrateIndex, float delta, uint64_t tickIndex) :
-            Event(InternalEventType::TICK, EventPriority::IMMEDIATE, sizeof(TickEvent)),
+            Event(InternalEventType::TICK, { }, sizeof(TickEvent)),
             m_tickrateIndex(tickrateIndex),
             m_deltaTime(delta),
             m_tickIndex(tickIndex)

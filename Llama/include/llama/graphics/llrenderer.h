@@ -13,13 +13,13 @@
 #pragma once
 
 #include "llgraphics.h"
-#include "llwindow.h"
 #include "../event/llevent.h"
-#include "../entity/llentity.h"
+#include "../entity/llentitymanager.h"
 
 namespace llama
 {
-    using Shader = std::shared_ptr<class Shader_T>;
+    LLAMA_CLASS_DECLARATION(Shader);
+    LLAMA_CLASS_DECLARATION(Window);
 
     class Renderer_T
     {
@@ -27,8 +27,7 @@ namespace llama
 
         virtual ~Renderer_T() = default;
 
-        virtual void setShader(Shader shader, Shader shader2) = 0;
-
+        virtual void addEntityManager(EntityManager manager) = 0;
 
     protected:
 

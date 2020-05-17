@@ -17,3 +17,9 @@ llama::Entity* llama::Group::getEntity(UID entity)
 {
     return m_members[entity].get();
 }
+
+void llama::Group::onTick(float delta)
+{
+    for (auto& a : m_members)
+        a.second->onTick(delta);
+}
